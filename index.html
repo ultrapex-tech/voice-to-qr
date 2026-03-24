@@ -15,6 +15,8 @@
       --secondary-hover: #0284c7;
       --danger: #ef4444;
       --danger-hover: #dc2626;
+      --success: #16a34a;
+      --success-hover: #15803d;
       --dark: #111827;
       --dark-hover: #1f2937;
       --bg-gradient-start: #eef2ff;
@@ -141,12 +143,17 @@
 
     /* --- QR Display Area --- */
     .qr-result { display: flex; flex-direction: column; align-items: center; width: 100%; animation: fadeIn 0.4s ease-out; }
-    .qr-box { background: white; padding: 1.5rem; border-radius: 1.5rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); border: 1px solid #f3f4f6; margin-bottom: 2rem; }
+    .qr-box { background: white; padding: 1.5rem; border-radius: 1.5rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); border: 1px solid #f3f4f6; margin-bottom: 1.5rem; }
     .qr-image { width: 256px; height: 256px; object-fit: contain; }
     
-    .btn-download { width: 100%; max-width: 320px; background-color: #e0e7ff; color: #4338ca; padding: 1rem 1.5rem; border-radius: 1rem; font-weight: 700; font-size: 1rem; gap: 0.5rem; border: 1px solid #c7d2fe; }
+    .action-buttons { display: flex; gap: 0.75rem; width: 100%; max-width: 320px; margin-bottom: 1rem; }
+    .btn-download { flex: 1; background-color: #e0e7ff; color: #4338ca; padding: 0.75rem; border-radius: 1rem; font-weight: 700; font-size: 0.875rem; gap: 0.5rem; border: 1px solid #c7d2fe; }
     .btn-download:hover { background-color: #c7d2fe; }
-    .qr-caption { color: var(--text-muted); font-size: 0.875rem; margin-top: 1.5rem; text-align: center; max-width: 250px; }
+
+    .btn-share { flex: 1; background-color: #dcfce7; color: #15803d; padding: 0.75rem; border-radius: 1rem; font-weight: 700; font-size: 0.875rem; gap: 0.5rem; border: 1px solid #bbf7d0; }
+    .btn-share:hover { background-color: #bbf7d0; }
+
+    .qr-caption { color: var(--text-muted); font-size: 0.875rem; text-align: center; max-width: 250px; line-height: 1.4; }
     
     .qr-placeholder { display: flex; flex-direction: column; align-items: center; opacity: 0.4; }
     .qr-placeholder i { width: 128px; height: 128px; color: var(--text-muted); margin-bottom: 1.5rem; }
@@ -172,9 +179,9 @@
         <span style="font-size: 0.875rem; font-weight: 600; color: var(--text-muted);">Spoken Language:</span>
         <select id="lang-select" class="lang-select">
           <option value="en-US">English (US)</option>
-          <option value="zh-CN">Chinese (Mandarin 简体)</option>
-          <option value="zh-TW">Chinese (Taiwan 繁體)</option>
+          <option value="zh-CN">Chinese (Simplified 简体)</option>
           <option value="zh-HK">Chinese (Cantonese 粵語)</option>
+          <option value="zh-TW">Chinese (Traditional 繁體)</option>
         </select>
       </div>
 
@@ -213,12 +220,19 @@
     <div class="card card-right">
       <div id="qr-result" class="qr-result hidden">
         <div class="qr-box">
-          <img id="qr-image" src="" alt="Generated QR Code" class="qr-image"/>
+          <img id="qr-image" crossorigin="anonymous" src="" alt="Generated QR Code" class="qr-image"/>
         </div>
-        <button id="download-btn" class="btn-download">
-          <i data-lucide="download"></i> Download Image
-        </button>
-        <p class="qr-caption">Scan this code with your Zebra scanner. Line breaks should now trigger as 'Enter'.</p>
+        
+        <div class="action-buttons">
+          <button id="download-btn" class="btn-download" title="Downloads Single Combined Image">
+            <i data-lucide="image-down"></i> Save Image
+          </button>
+          <button id="share-btn" class="btn-share" title="Share Combined Image">
+            <i data-lucide="share-2"></i> Share Image
+          </button>
+        </div>
+
+        <p class="qr-caption">Downloads and shares will combine both the QR code and the translated text into a single image.</p>
       </div>
 
       <div id="qr-placeholder" class="qr-placeholder">
@@ -241,6 +255,7 @@
     const generateBtn = document.getElementById('generate-btn');
     const clearBtn = document.getElementById('clear-btn');
     const downloadBtn = document.getElementById('download-btn');
+    const shareBtn = document.getElementById('share-btn');
     const qrResult = document.getElementById('qr-result');
     const qrPlaceholder = document.getElementById('qr-placeholder');
     const qrImage = document.getElementById('qr-image');
@@ -294,7 +309,7 @@
 
       recognition.onerror = (event) => {
         if (event.error === 'not-allowed') {
-          showError("Microphone access blocked. Note: Google Apps Script iframes do not allow microphone usage.");
+          showError("Microphone access blocked. Ensure you are on a secure (HTTPS) site.");
         } else if (event.error !== 'no-speech') {
           showError("Microphone error: " + event.error);
         }
@@ -344,12 +359,42 @@
     });
 
     async function translateToEnglish(text) {
-      // FIX: Replaced backticks with strict string concatenation 
       const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=' + encodeURIComponent(text);
       const response = await fetch(url);
       const data = await response.json();
       return data[0].map(item => item[0]).join('');
     }
+
+    generateBtn.addEventListener('click', async () => {
+      const textToProcess = textArea.value.trim();
+      if (!textToProcess) { showError("Please enter text first."); return; }
+      
+      showError('');
+      generateBtn.disabled = true;
+      generateBtn.innerHTML = '<i data-lucide="loader" class="animate-spin"></i> Generating...';
+      lucide.createIcons();
+
+      try {
+        const englishText = await translateToEnglish(textToProcess);
+        textArea.value = englishText;
+        finalText = englishText;
+
+        const formattedText = englishText.replace(/\r?\n/g, '\r\n');
+        
+        // Swapped to QuickChart API because it properly supports Canvas Image Stitching
+        currentQrUrl = 'https://quickchart.io/qr?size=300&margin=1&text=' + encodeURIComponent(formattedText);
+        
+        qrImage.src = currentQrUrl;
+        qrPlaceholder.classList.add('hidden');
+        qrResult.classList.remove('hidden');
+      } catch (err) {
+        showError("Failed to translate or generate QR.");
+      } finally {
+        generateBtn.disabled = false;
+        generateBtn.innerHTML = '<i data-lucide="qr-code"></i> Create English QR';
+        lucide.createIcons();
+      }
+    });
 
     translateBtn.addEventListener('click', async () => {
       const textToTranslate = textArea.value.trim();
@@ -373,58 +418,137 @@
       }
     });
 
-    generateBtn.addEventListener('click', async () => {
-      const textToProcess = textArea.value.trim();
-      if (!textToProcess) { showError("Please enter text first."); return; }
-      
-      showError('');
-      generateBtn.disabled = true;
-      generateBtn.innerHTML = '<i data-lucide="loader" class="animate-spin"></i> Generating...';
-      lucide.createIcons();
-
-      try {
-        const englishText = await translateToEnglish(textToProcess);
-        textArea.value = englishText;
-        finalText = englishText;
-
-        const formattedText = englishText.replace(/\r?\n/g, '\r\n');
-        
-        // FIX: Replaced backticks with strict string concatenation
-        currentQrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' + encodeURIComponent(formattedText) + '&margin=10';
-        
-        qrImage.src = currentQrUrl;
-        qrPlaceholder.classList.add('hidden');
-        qrResult.classList.remove('hidden');
-      } catch (err) {
-        showError("Failed to translate or generate QR.");
-      } finally {
-        generateBtn.disabled = false;
-        generateBtn.innerHTML = '<i data-lucide="qr-code"></i> Create English QR';
-        lucide.createIcons();
-      }
-    });
-
     clearBtn.addEventListener('click', () => {
       finalText = ''; textArea.value = ''; currentQrUrl = ''; qrImage.src = '';
       qrPlaceholder.classList.remove('hidden'); qrResult.classList.add('hidden'); showError('');
       if (isRecording && recognition) recognition.stop();
     });
 
-    downloadBtn.addEventListener('click', async () => {
-      if (!currentQrUrl) return;
+    // --- NEW: HTML Canvas Logic to Stitch Image and Text Together ---
+    function getCombinedCanvas() {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      const qrSize = 300;
+      const padding = 20;
+      const fontSize = 16;
+      const lineHeight = 24;
+      const textToDraw = textArea.value.trim();
+      
+      // Calculate text wrapping so it doesn't go off the edges
+      ctx.font = fontSize + 'px system-ui, sans-serif';
+      const words = textToDraw.split(' ');
+      let line = '';
+      let lines = [];
+      const maxWidth = qrSize; 
+      
+      for(let i = 0; i < words.length; i++) {
+        let testLine = line + words[i] + ' ';
+        let metrics = ctx.measureText(testLine);
+        if(metrics.width > maxWidth && i > 0) {
+          lines.push(line);
+          line = words[i] + ' ';
+        } else {
+          line = testLine;
+        }
+      }
+      lines.push(line);
+      
+      const textHeight = lines.length * lineHeight;
+      
+      // Set the final image dimensions (QR size + Padding + Text block height)
+      canvas.width = qrSize + (padding * 2);
+      canvas.height = qrSize + (padding * 2) + textHeight + padding; 
+      
+      // Paint Background White
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Paint the QR Code
+      ctx.drawImage(qrImage, padding, padding, qrSize, qrSize);
+      
+      // Paint the Text underneath
+      ctx.fillStyle = '#111827'; // Dark gray text
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      let yPosition = qrSize + (padding * 2);
+      
+      for(let i = 0; i < lines.length; i++) {
+        ctx.fillText(lines[i], canvas.width / 2, yPosition);
+        yPosition += lineHeight;
+      }
+      
+      return canvas;
+    }
+
+    // --- Updated Download Button ---
+    downloadBtn.addEventListener('click', () => {
+      if (!currentQrUrl || !qrImage.complete) return;
+      
       try {
-        const response = await fetch(currentQrUrl);
-        const blob = await response.blob();
-        const blobUrl = window.URL.createObjectURL(blob);
+        const canvas = getCombinedCanvas();
+        const combinedDataUrl = canvas.toDataURL('image/png');
+        
         const link = document.createElement('a');
-        link.href = blobUrl; link.download = 'voice-qr.png';
-        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        link.href = combinedDataUrl;
+        link.download = 'voice-qr-combined.png';
+        document.body.appendChild(link); 
+        link.click(); 
+        document.body.removeChild(link);
       } catch (err) {
-        const link = document.createElement('a');
-        link.href = currentQrUrl; link.target = "_blank"; link.download = 'voice-qr.png';
-        document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        showError("Could not generate combined image. Try again.");
+        console.error(err);
       }
     });
+
+    // --- Updated Share Button ---
+    shareBtn.addEventListener('click', async () => {
+      if (!currentQrUrl || !qrImage.complete) {
+        showError("Please generate a QR code first.");
+        return;
+      }
+
+      try {
+        const canvas = getCombinedCanvas();
+        
+        canvas.toBlob(async (blob) => {
+          // Create a true "File" out of the canvas drawing
+          const file = new File([blob], 'voice-qr-combined.png', { type: 'image/png' });
+          
+          // Check if the device's native sharing supports files (Mostly mobile devices)
+          if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            try {
+              await navigator.share({
+                files: [file],
+                title: 'Translated Voice QR',
+                text: 'Here is the translated text and QR code!'
+              });
+            } catch (err) {
+              console.log("Share cancelled by user.");
+            }
+          } else {
+            // Fallback for desktop computers: just download the image and prompt WhatsApp Web
+            alert("Your browser doesn't support direct image sharing. The image will download, and WhatsApp will open so you can attach it!");
+            
+            // Trigger download
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'voice-qr-combined.png';
+            link.click();
+            
+            // Open WhatsApp Web
+            const textToShare = textArea.value.trim();
+            const whatsappUrl = 'https://api.whatsapp.com/send?text=' + encodeURIComponent(textToShare);
+            window.open(whatsappUrl, '_blank');
+          }
+        }, 'image/png');
+
+      } catch (err) {
+        showError("Failed to prepare image for sharing.");
+        console.error(err);
+      }
+    });
+
   </script>
 </body>
 </html>

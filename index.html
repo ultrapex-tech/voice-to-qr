@@ -549,6 +549,80 @@
       }
     });
 
+    // Put your Google Apps Script Web App URL here
+const GAS_BACKEND_URL = "https://script.google.com/macros/s/AKfycbx92-VcS0HEe8I6nC8F0QQziBfgBjuFogpu8gfxj-LoNSXQsEsJhGxZSNSpkTFtRVU8/exec";
+
+let mediaRecorder;
+let audioChunks = [];
+
+// When the user clicks the microphone button...
+async function startRecording() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+    audioChunks = [];
+
+    mediaRecorder.ondataavailable = (event) => {
+      audioChunks.push(event.data);
+    };
+
+    mediaRecorder.onstop = async () => {
+      // 1. Combine audio chunks into a single WebM file
+      const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+      
+      // 2. Convert the Blob to a Base64 string so we can send it in JSON
+      const reader = new FileReader();
+      reader.readAsDataURL(audioBlob);
+      reader.onloadend = async () => {
+        // Remove the "data:audio/webm;base64," prefix
+        const base64Audio = reader.result.split(',')[1]; 
+        
+        // 3. Send it to your Google Apps Script backend!
+        await sendAudioToGAS(base64Audio);
+      };
+    };
+
+    mediaRecorder.start();
+    console.log("Recording started...");
+    // Update your UI to show recording status here
+
+  } catch (err) {
+    console.error("Microphone access denied or failed", err);
+  }
+}
+
+function stopRecording() {
+  if (mediaRecorder && mediaRecorder.state === "recording") {
+    mediaRecorder.stop();
+    console.log("Recording stopped, processing audio...");
+    // Update your UI to show a loading spinner here
+  }
+}
+
+async function sendAudioToGAS(base64Audio) {
+  try {
+    const response = await fetch(GAS_BACKEND_URL, {
+      method: "POST",
+      // Browsers handle plain text CORS better with GAS, so we send stringified JSON
+      body: JSON.stringify({
+        audio: base64Audio,
+        language: document.getElementById('lang-select').value // e.g., "yue-Hant-HK"
+      })
+    });
+
+    const data = await response.json();
+    
+    if (data.success) {
+      // Update your text area with the highly accurate medical transcript!
+      document.getElementById('text-input').value = data.text;
+    } else {
+      console.error("Backend error:", data.error);
+    }
+  } catch (error) {
+    console.error("Fetch failed:", error);
+  }
+}
+
   </script>
 </body>
 </html>

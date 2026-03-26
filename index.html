@@ -47,27 +47,34 @@
     .recording-indicator { position: absolute; top: 1rem; right: 1rem; background: #fee2e2; color: #dc2626; padding: 0.375rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; }
     .recording-indicator .dot { width: 8px; height: 8px; background-color: #dc2626; border-radius: 50%; animation: pulse 2s infinite; }
     
-    .controls { display: grid; grid-template-columns: 1fr auto auto auto; gap: 0.75rem; width: 100%; }
-    
     button { border: none; background: none; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
     button:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(70%); }
     
-    /* ROW 1 */
-    .btn-translate { grid-column: 1; height: 60px; background-color: var(--secondary); color: white; border-radius: 1rem; font-size: 1rem; font-weight: 700; gap: 0.5rem; }
+    .controls { 
+      display: grid; 
+      grid-template-columns: 1fr auto auto; 
+      gap: 0.75rem; 
+      width: 100%; 
+    }
+    .btn-translate { grid-column: 1; grid-row: 1; height: 60px; background-color: var(--secondary); color: white; border-radius: 1rem; font-size: 1rem; font-weight: 700; gap: 0.5rem; }
     .btn-translate:hover:not(:disabled) { background-color: var(--secondary-hover); }
     
-    .btn-mic-daily { grid-column: 2; position: relative; width: 60px; height: 60px; border-radius: 50%; background-color: var(--primary); color: white; }
+    .btn-mic-daily { grid-column: 2; grid-row: 1; position: relative; width: 60px; height: 60px; border-radius: 50%; background-color: var(--primary); color: white; }
     .btn-mic-daily:hover:not(:disabled) { background-color: var(--primary-hover); transform: scale(1.05); }
     
-    .btn-mic-medical { grid-column: 3; position: relative; width: 60px; height: 60px; border-radius: 50%; background-color: var(--medical); color: white; }
+    .btn-mic-medical { grid-column: 3; grid-row: 1; position: relative; width: 60px; height: 60px; border-radius: 50%; background-color: var(--medical); color: white; }
     .btn-mic-medical:hover:not(:disabled) { background-color: var(--medical-hover); transform: scale(1.05); }
 
-    /* ROW 2 */
+    /* --- ROW 2 --- */
     .btn-generate { grid-column: 1; grid-row: 2; height: 60px; background-color: var(--dark); color: white; border-radius: 1rem; font-size: 1rem; font-weight: 700; gap: 0.5rem; }
     .btn-generate:hover:not(:disabled) { background-color: var(--dark-hover); }
 
     .btn-camera { grid-column: 2; grid-row: 2; position: relative; width: 60px; height: 60px; border-radius: 50%; background-color: var(--camera); color: white; }
     .btn-camera:hover:not(:disabled) { background-color: var(--camera-hover); transform: scale(1.05); }
+
+    .btn-clear { grid-column: 3; grid-row: 2; width: 60px; height: 60px; background-color: white; border: 1px solid var(--border-color); color: var(--text-muted); border-radius: 1rem; }
+    .btn-clear:hover:not(:disabled) { background-color: #fef2f2; color: var(--danger); border-color: #fca5a5; }
+    
 
     .btn-clear { grid-column: 3; grid-row: 2; width: 60px; height: 60px; background-color: white; border: 1px solid var(--border-color); color: var(--text-muted); border-radius: 1rem; }
     .btn-clear:hover:not(:disabled) { background-color: #fef2f2; color: var(--danger); border-color: #fca5a5; }

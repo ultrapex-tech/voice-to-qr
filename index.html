@@ -50,38 +50,40 @@
     button { border: none; background: none; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
     button:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(70%); }
     
+    /* --- BULLETPROOF GRID LAYOUT --- */
     .controls { 
       display: grid; 
       grid-template-columns: 1fr auto auto; 
+      grid-template-areas: 
+        "translate daily medical"
+        "generate camera clear";
       gap: 0.75rem; 
       width: 100%; 
     }
-    .btn-translate { grid-column: 1; grid-row: 1; height: 60px; background-color: var(--secondary); color: white; border-radius: 1rem; font-size: 1rem; font-weight: 700; gap: 0.5rem; }
+    
+    .btn-translate { grid-area: translate; height: 60px; background-color: var(--secondary); color: white; border-radius: 1rem; font-size: 1rem; font-weight: 700; gap: 0.5rem; }
     .btn-translate:hover:not(:disabled) { background-color: var(--secondary-hover); }
     
-    .btn-mic-daily { grid-column: 2; grid-row: 1; position: relative; width: 60px; height: 60px; border-radius: 50%; background-color: var(--primary); color: white; }
+    .btn-mic-daily { grid-area: daily; position: relative; width: 60px; height: 60px; border-radius: 50%; background-color: var(--primary); color: white; }
     .btn-mic-daily:hover:not(:disabled) { background-color: var(--primary-hover); transform: scale(1.05); }
     
-    .btn-mic-medical { grid-column: 3; grid-row: 1; position: relative; width: 60px; height: 60px; border-radius: 50%; background-color: var(--medical); color: white; }
+    .btn-mic-medical { grid-area: medical; position: relative; width: 60px; height: 60px; border-radius: 50%; background-color: var(--medical); color: white; }
     .btn-mic-medical:hover:not(:disabled) { background-color: var(--medical-hover); transform: scale(1.05); }
 
-    /* --- ROW 2 --- */
-    .btn-generate { grid-column: 1; grid-row: 2; height: 60px; background-color: var(--dark); color: white; border-radius: 1rem; font-size: 1rem; font-weight: 700; gap: 0.5rem; }
+    .btn-generate { grid-area: generate; height: 60px; background-color: var(--dark); color: white; border-radius: 1rem; font-size: 1rem; font-weight: 700; gap: 0.5rem; }
     .btn-generate:hover:not(:disabled) { background-color: var(--dark-hover); }
 
-    .btn-camera { grid-column: 2; grid-row: 2; position: relative; width: 60px; height: 60px; border-radius: 50%; background-color: var(--camera); color: white; }
+    .btn-camera { grid-area: camera; position: relative; width: 60px; height: 60px; border-radius: 50%; background-color: var(--camera); color: white; }
     .btn-camera:hover:not(:disabled) { background-color: var(--camera-hover); transform: scale(1.05); }
 
-    .btn-clear { grid-column: 3; grid-row: 2; width: 60px; height: 60px; background-color: white; border: 1px solid var(--border-color); color: var(--text-muted); border-radius: 1rem; }
+    .btn-clear { grid-area: clear; width: 60px; height: 60px; background-color: white; border: 1px solid var(--border-color); color: var(--text-muted); border-radius: 1rem; }
     .btn-clear:hover:not(:disabled) { background-color: #fef2f2; color: var(--danger); border-color: #fca5a5; }
-    
+    /* ------------------------------ */
+
     .is-recording { background-color: var(--danger) !important; box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.3); }
     .is-recording:hover { background-color: var(--danger-hover) !important; transform: scale(1.05); }
     .mic-ping { position: absolute; inset: 0; border-radius: 50%; border: 4px solid var(--danger); opacity: 0; pointer-events: none; }
     .is-recording .mic-ping { animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite; }
-    
-    .btn-clear { grid-column: 4; width: 60px; height: 60px; background-color: white; border: 1px solid var(--border-color); color: var(--text-muted); border-radius: 1rem; }
-    .btn-clear:hover:not(:disabled) { background-color: #fef2f2; color: var(--danger); border-color: #fca5a5; }
     
     .qr-result { display: flex; flex-direction: column; align-items: center; width: 100%; animation: fadeIn 0.4s ease-out; }
     .qr-box { background: white; padding: 1.5rem; border-radius: 1.5rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); border: 1px solid #f3f4f6; margin-bottom: 1.5rem; }
@@ -175,23 +177,19 @@
     const textArea = document.getElementById('text-input');
     const langSelect = document.getElementById('lang-select');
     
-    // Buttons
     const dailyMicBtn = document.getElementById('daily-mic-btn');
     const googleMicBtn = document.getElementById('google-mic-btn');
     const cameraBtn = document.getElementById('camera-btn');
     const imageUpload = document.getElementById('image-upload');
     
-    // Icons
     const iconDailyMic = document.getElementById('icon-daily-mic'); const iconDailyStop = document.getElementById('icon-daily-stop');
     const iconGoogleMic = document.getElementById('icon-google-mic'); const iconGoogleStop = document.getElementById('icon-google-stop');
     
-    // UI Elements
     const recordingIndicator = document.getElementById('recording-indicator');
     const medicalBanner = document.getElementById('medical-banner');
     const cameraBanner = document.getElementById('camera-banner');
     const errorBox = document.getElementById('error-box'); const errorText = document.getElementById('error-text');
 
-    // Make sure to use your LATEST Google Apps Script Web App URL here!
     const GAS_BACKEND_URL = "https://script.google.com/macros/s/AKfycbx92-VcS0HEe8I6nC8F0QQziBfgBjuFogpu8gfxj-LoNSXQsEsJhGxZSNSpkTFtRVU8/exec";
     
     let isDailyRecording = false; let isGoogleRecording = false;
@@ -214,11 +212,8 @@
       dailyMicBtn.disabled = false; googleMicBtn.disabled = false; cameraBtn.disabled = false;
     }
 
-    // ==========================================
-    // IMAGE UPLOAD & OCR LOGIC
-    // ==========================================
     cameraBtn.addEventListener('click', () => {
-      imageUpload.click(); // Trigger the hidden file input
+      imageUpload.click();
     });
 
     imageUpload.addEventListener('change', (event) => {
@@ -233,7 +228,6 @@
 
       const reader = new FileReader();
       reader.onloadend = async () => {
-        // Strip the data:image/jpeg;base64, prefix
         const base64Image = reader.result.split(',')[1];
         
         try {
@@ -244,7 +238,6 @@
           
           const data = await response.json();
           if (data.success) {
-            // Append the extracted text to the textarea
             finalText = finalText + (finalText ? '\n\n' : '') + data.text; 
             textArea.value = finalText;
           } else {
@@ -257,15 +250,12 @@
           cameraBtn.innerHTML = '<i data-lucide="camera"></i>';
           lucide.createIcons();
           cameraBanner.classList.add('hidden');
-          imageUpload.value = ''; // Reset file input so they can scan another
+          imageUpload.value = ''; 
         }
       };
       reader.readAsDataURL(file);
     });
 
-    // ==========================================
-    // MICROPHONE 1: DAILY MIC (Web Speech API)
-    // ==========================================
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     let recognition = null;
     if (SpeechRecognition) {
@@ -297,9 +287,6 @@
       else { recognition.lang = langSelect.value; try { recognition.start(); } catch (e) {} }
     });
 
-    // ==========================================
-    // MICROPHONE 2: GOOGLE CLOUD MIC
-    // ==========================================
     async function startGoogleMic() {
       try {
         showError('');
@@ -365,9 +352,6 @@
       if (isGoogleRecording) stopGoogleMic(); else startGoogleMic();
     });
 
-    // ==========================================
-    // UTILS & CANVAS DRAWING
-    // ==========================================
     async function translateToEnglish(text) {
       const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q=' + encodeURIComponent(text);
       const response = await fetch(url); const data = await response.json(); return data[0].map(item => item[0]).join('');

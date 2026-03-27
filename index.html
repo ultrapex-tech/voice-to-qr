@@ -370,7 +370,7 @@
         document.getElementById('qr-image').src = currentQrUrl;
         document.getElementById('qr-placeholder').classList.add('hidden'); document.getElementById('qr-result').classList.remove('hidden');
       } catch (err) { showError("Failed to translate or generate QR."); } 
-      finally { document.getElementById('generate-btn').disabled = false; document.getElementById('generate-btn').innerHTML = '<i data-lucide="qr-code"></i> Create English QR'; lucide.createIcons(); }
+      finally { document.getElementById('generate-btn').disabled = false; document.getElementById('generate-btn').innerHTML = '<i data-lucide="qr-code"></i> Create QR'; lucide.createIcons(); }
     });
 
     document.getElementById('translate-btn').addEventListener('click', async () => {

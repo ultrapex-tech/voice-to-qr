@@ -30,7 +30,7 @@
     .subtitle { color: var(--text-muted); line-height: 1.5; }
     
     .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; }
-    .lang-select { padding: 0.5rem 1rem; border-radius: 0.75rem; border: 1px solid var(--border-color); background-color: white; color: var(--text-main); font-weight: 500; font-size: 0.875rem; cursor: pointer; outline: none; }
+    .lang-select { padding: 0.5rem 1rem; border-radius: 0.75rem; border: 1px solid var(--border-color); background-color: white; color: var(--text-main); font-weight: 500; font-size: 0.875rem; cursor: pointer; outline: none; width: 100%; max-width: 250px;}
     .lang-select:focus { border-color: var(--primary); }
     
     .error-box { background-color: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; padding: 1rem; border-radius: 1rem; display: flex; gap: 0.75rem; align-items: flex-start; margin-bottom: 1.5rem; font-size: 0.875rem; font-weight: 500; }
@@ -40,12 +40,18 @@
     
     .hidden { display: none !important; }
     
-    .input-wrapper { position: relative; flex: 1; display: flex; flex-direction: column; margin-bottom: 1.5rem; }
-    textarea { flex: 1; width: 100%; min-height: 200px; padding: 1.25rem; border-radius: 1rem; border: 1px solid var(--border-color); font-size: 1.125rem; line-height: 1.6; resize: none; font-family: inherit; transition: all 0.2s; }
-    textarea:focus { outline: none; border-color: #a855f7; box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2); }
+    .input-group { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; }
+    .input-wrapper { position: relative; display: flex; flex-direction: column; width: 100%; }
+    .input-label { font-size: 0.875rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; }
     
-    .recording-indicator { position: absolute; top: 1rem; right: 1rem; background: #fee2e2; color: #dc2626; padding: 0.375rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; }
+    textarea { width: 100%; min-height: 120px; padding: 1rem; border-radius: 1rem; border: 1px solid var(--border-color); font-size: 1rem; line-height: 1.5; resize: vertical; font-family: inherit; transition: all 0.2s; }
+    textarea:focus { outline: none; border-color: #a855f7; box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2); }
+    #translated-input { background-color: #f8fafc; }
+    
+    .recording-indicator { position: absolute; top: 2.25rem; right: 1rem; background: #fee2e2; color: #dc2626; padding: 0.375rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; }
     .recording-indicator .dot { width: 8px; height: 8px; background-color: #dc2626; border-radius: 50%; animation: pulse 2s infinite; }
+    
+    .templates-box { background-color: #f3f4f6; padding: 1rem; border-radius: 1rem; margin-bottom: 1.5rem; border: 1px dashed #d1d5db; }
     
     button { border: none; background: none; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
     button:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(70%); }
@@ -100,6 +106,7 @@
     @keyframes ping { 0% { transform: scale(0.8); opacity: 0.8; } 75%, 100% { transform: scale(1.4); opacity: 0; } }
     @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
     .animate-spin { animation: spin 1s linear infinite; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
@@ -112,11 +119,18 @@
 
       <div class="top-bar">
         <span style="font-size: 0.875rem; font-weight: 600; color: var(--text-muted);">Spoken Language:</span>
-        <select id="lang-select" class="lang-select">
+        <select id="lang-select" class="lang-select" style="width: auto; flex: 1;">
           <option value="en-US">English (US)</option>
           <option value="zh-CN">Chinese (Simplified 简体)</option>
           <option value="zh-HK">Chinese (Cantonese 粵語)</option>
           <option value="zh-TW">Chinese (Traditional 繁體)</option>
+        </select>
+      </div>
+
+      <div id="templates-container" class="templates-box hidden">
+        <span style="font-size: 0.875rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">Load a Template:</span>
+        <select id="template-select" class="lang-select">
+          <option value="">Select a template...</option>
         </select>
       </div>
 
@@ -132,13 +146,21 @@
         <div><span>Scanning document...</span><br><span style="font-size: 0.75rem; font-weight: normal;">Extracting text from your image. Please wait.</span></div>
       </div>
 
-      <div class="input-wrapper">
-        <textarea id="text-input" placeholder="Tap a mic, scan a document, or type your text here..."></textarea>
-        <div id="recording-indicator" class="recording-indicator hidden"><div class="dot"></div><span id="recording-text">RECORDING</span></div>
+      <div class="input-group">
+        <div class="input-wrapper">
+          <label class="input-label">Original Text</label>
+          <textarea id="text-input" placeholder="Tap a mic, scan a document, or type your text here..."></textarea>
+          <div id="recording-indicator" class="recording-indicator hidden"><div class="dot"></div><span id="recording-text">RECORDING</span></div>
+        </div>
+
+        <div class="input-wrapper">
+          <label class="input-label">Translated Text (English)</label>
+          <textarea id="translated-input" placeholder="Translation will appear here..."></textarea>
+        </div>
       </div>
 
       <div class="controls">
-        <button id="translate-btn" class="btn-translate" title="Preview English Translation"><i data-lucide="languages"></i> To English</button>
+        <button id="translate-btn" class="btn-translate" title="Translate Original to English"><i data-lucide="languages"></i> To English</button>
         
         <button id="daily-mic-btn" class="btn-mic-daily" title="Daily Mic (Live Typing)">
           <span id="icon-daily-mic"><i data-lucide="mic"></i></span><span id="icon-daily-stop" class="hidden"><i data-lucide="square"></i></span><span class="mic-ping"></span>
@@ -148,12 +170,12 @@
           <span id="icon-google-mic"><i data-lucide="stethoscope"></i></span><span id="icon-google-stop" class="hidden"><i data-lucide="square"></i></span><span class="mic-ping"></span>
         </button>
 
-        <button id="generate-btn" class="btn-generate" title="Auto-translate to English and generate QR"><i data-lucide="qr-code"></i> Create QR</button>
+        <button id="generate-btn" class="btn-generate" title="Generate QR from Translated Text"><i data-lucide="qr-code"></i> Create QR</button>
 
-        <button id="camera-btn" class="btn-camera" title="Scan Document / Photo">
+        <button id="camera-btn" class="btn-camera" title="Take or Upload Photo">
           <i data-lucide="camera"></i>
         </button>
-        <input type="file" id="image-upload" accept="image/*" class="hidden" capture="environment">
+        <input type="file" id="image-upload" accept="image/*" class="hidden">
         
         <button id="clear-btn" class="btn-clear" title="Clear Everything"><i data-lucide="trash-2"></i></button>
       </div>
@@ -175,7 +197,9 @@
     lucide.createIcons();
 
     const textArea = document.getElementById('text-input');
+    const translatedArea = document.getElementById('translated-input');
     const langSelect = document.getElementById('lang-select');
+    const templateSelect = document.getElementById('template-select');
     
     const dailyMicBtn = document.getElementById('daily-mic-btn');
     const googleMicBtn = document.getElementById('google-mic-btn');
@@ -195,6 +219,40 @@
     let isDailyRecording = false; let isGoogleRecording = false;
     let finalText = ''; let currentQrUrl = '';
     let mediaRecorder; let audioChunks = [];
+
+    // On Load: Attempt to fetch templates from GAS
+    async function fetchTemplates() {
+      try {
+        const response = await fetch(GAS_BACKEND_URL, {
+          method: "POST",
+          body: JSON.stringify({ action: "getTemplates" })
+        });
+        const data = await response.json();
+        
+        // Assuming your backend returns { success: true, templates: [{name: "T1", text: "Hello"}, ...] }
+        if (data.success && data.templates && data.templates.length > 0) {
+          document.getElementById('templates-container').classList.remove('hidden');
+          data.templates.forEach(t => {
+            const option = document.createElement('option');
+            option.value = t.text;
+            option.textContent = t.name;
+            templateSelect.appendChild(option);
+          });
+        }
+      } catch (err) {
+        console.log("No templates configured or backend not ready yet.");
+      }
+    }
+    window.addEventListener('load', fetchTemplates);
+
+    // Insert template into main dictation box
+    templateSelect.addEventListener('change', (e) => {
+      if (e.target.value) {
+        finalText = finalText + (finalText ? '\n' : '') + e.target.value;
+        textArea.value = finalText;
+        e.target.value = ""; // Reset select
+      }
+    });
 
     function showError(msg) {
       if (msg) { errorText.textContent = msg; errorBox.classList.remove('hidden'); } 
@@ -357,37 +415,55 @@
       const response = await fetch(url); const data = await response.json(); return data[0].map(item => item[0]).join('');
     }
 
-    document.getElementById('generate-btn').addEventListener('click', async () => {
-      const textToProcess = textArea.value.trim();
-      if (!textToProcess) { showError("Please enter text first."); return; }
-      showError(''); document.getElementById('generate-btn').disabled = true;
-      document.getElementById('generate-btn').innerHTML = '<i data-lucide="loader" class="animate-spin"></i> Generating...'; lucide.createIcons();
-
-      try {
-        const englishText = await translateToEnglish(textToProcess);
-        textArea.value = englishText; finalText = englishText;
-        currentQrUrl = 'https://quickchart.io/qr?size=300&margin=1&text=' + encodeURIComponent(englishText.replace(/\r?\n/g, '\r\n'));
-        document.getElementById('qr-image').src = currentQrUrl;
-        document.getElementById('qr-placeholder').classList.add('hidden'); document.getElementById('qr-result').classList.remove('hidden');
-      } catch (err) { showError("Failed to translate or generate QR."); } 
-      finally { document.getElementById('generate-btn').disabled = false; document.getElementById('generate-btn').innerHTML = '<i data-lucide="qr-code"></i> Create QR'; lucide.createIcons(); }
-    });
-
     document.getElementById('translate-btn').addEventListener('click', async () => {
       const textToTranslate = textArea.value.trim();
-      if (!textToTranslate) { showError("Please enter some text."); return; }
+      if (!textToTranslate) { showError("Please enter some original text first."); return; }
       showError(''); document.getElementById('translate-btn').disabled = true;
       document.getElementById('translate-btn').innerHTML = '<i data-lucide="loader" class="animate-spin"></i> Translating...'; lucide.createIcons();
 
       try {
         const translatedText = await translateToEnglish(textToTranslate);
-        textArea.value = translatedText; finalText = translatedText;
+        translatedArea.value = translatedText;
       } catch (err) { showError("Translation failed."); } 
       finally { document.getElementById('translate-btn').disabled = false; document.getElementById('translate-btn').innerHTML = '<i data-lucide="languages"></i> To English'; lucide.createIcons(); }
     });
 
+    document.getElementById('generate-btn').addEventListener('click', async () => {
+      let textToProcess = translatedArea.value.trim();
+      
+      // If translation box is empty, auto-translate first
+      if (!textToProcess) { 
+        const originalText = textArea.value.trim();
+        if (!originalText) {
+          showError("Please enter text first."); return; 
+        }
+        showError(''); document.getElementById('generate-btn').disabled = true;
+        document.getElementById('generate-btn').innerHTML = '<i data-lucide="loader" class="animate-spin"></i> Generating...'; lucide.createIcons();
+
+        try {
+           textToProcess = await translateToEnglish(originalText);
+           translatedArea.value = textToProcess;
+        } catch (err) {
+           showError("Failed to auto-translate for QR.");
+           document.getElementById('generate-btn').disabled = false;
+           document.getElementById('generate-btn').innerHTML = '<i data-lucide="qr-code"></i> Create QR'; lucide.createIcons();
+           return;
+        }
+      }
+
+      showError(''); document.getElementById('generate-btn').disabled = true;
+      document.getElementById('generate-btn').innerHTML = '<i data-lucide="loader" class="animate-spin"></i> Generating...'; lucide.createIcons();
+
+      try {
+        currentQrUrl = 'https://quickchart.io/qr?size=300&margin=1&text=' + encodeURIComponent(textToProcess.replace(/\r?\n/g, '\r\n'));
+        document.getElementById('qr-image').src = currentQrUrl;
+        document.getElementById('qr-placeholder').classList.add('hidden'); document.getElementById('qr-result').classList.remove('hidden');
+      } catch (err) { showError("Failed to generate QR."); } 
+      finally { document.getElementById('generate-btn').disabled = false; document.getElementById('generate-btn').innerHTML = '<i data-lucide="qr-code"></i> Create QR'; lucide.createIcons(); }
+    });
+
     document.getElementById('clear-btn').addEventListener('click', () => {
-      finalText = ''; textArea.value = ''; currentQrUrl = ''; document.getElementById('qr-image').src = '';
+      finalText = ''; textArea.value = ''; translatedArea.value = ''; currentQrUrl = ''; document.getElementById('qr-image').src = '';
       document.getElementById('qr-placeholder').classList.remove('hidden'); document.getElementById('qr-result').classList.add('hidden'); showError('');
       if (isDailyRecording) recognition.stop();
       if (isGoogleRecording) stopGoogleMic();
@@ -395,7 +471,8 @@
 
     function getCombinedCanvas() {
       const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
-      const qrSize = 300; const padding = 20; const fontSize = 16; const lineHeight = 24; const textToDraw = textArea.value.trim();
+      const qrSize = 300; const padding = 20; const fontSize = 16; const lineHeight = 24; 
+      const textToDraw = translatedArea.value.trim(); // Uses translated text
       ctx.font = fontSize + 'px system-ui, sans-serif'; const words = textToDraw.split(' ');
       let line = ''; let lines = [];
       for(let i = 0; i < words.length; i++) {
@@ -430,7 +507,7 @@
           } else {
             alert("Your browser doesn't support direct image sharing. The image will download, and WhatsApp will open!");
             const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'voice-qr-combined.png'; link.click();
-            window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(textArea.value.trim()), '_blank');
+            window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(translatedArea.value.trim()), '_blank');
           }
         }, 'image/png');
       } catch (err) { showError("Failed to prepare image for sharing."); }

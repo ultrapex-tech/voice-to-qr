@@ -288,9 +288,10 @@
     // Insert template into main dictation box
     templateSelect.addEventListener('change', (e) => {
       if (e.target.value) {
-        finalText = finalText + (finalText ? '\n' : '') + e.target.value;
+        finalText = e.target.value; // Overwrites the existing text entirely
         textArea.value = finalText;
-        e.target.value = ""; // Reset select
+        translatedArea.value = '';  // Clears out any old translation too
+        e.target.value = "";        // Reset select dropdown
       }
     });
 
@@ -301,13 +302,31 @@
 
     textArea.addEventListener('input', (e) => { finalText = e.target.value; });
 
+    // --- NEW LANGUAGE RULE ---
+    function enforceLanguageRules() {
+      if (langSelect.value !== 'en-US') {
+        googleMicBtn.disabled = true;
+        googleMicBtn.title = "Medical Cloud (Disabled for English)";
+      } else {
+        googleMicBtn.disabled = false;
+        googleMicBtn.title = "Google Medical Cloud";
+      }
+    }
+    // Listen for language changes from the user
+    langSelect.addEventListener('change', enforceLanguageRules);
+    window.addEventListener('load', enforceLanguageRules);
+    // -------------------------
+
     function lockControls(exclude) {
       if(exclude !== 'daily') dailyMicBtn.disabled = true;
       if(exclude !== 'google') googleMicBtn.disabled = true;
       if(exclude !== 'camera') cameraBtn.disabled = true;
     }
+    
     function unlockControls() {
-      dailyMicBtn.disabled = false; googleMicBtn.disabled = false; cameraBtn.disabled = false;
+      dailyMicBtn.disabled = false; 
+      cameraBtn.disabled = false;
+      enforceLanguageRules(); // Ensures Google Mic obeys the language rule after unlocking
     }
 
     cameraBtn.addEventListener('click', () => {

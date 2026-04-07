@@ -51,7 +51,12 @@
     .recording-indicator { position: absolute; top: 2.25rem; right: 1rem; background: #fee2e2; color: #dc2626; padding: 0.375rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; }
     .recording-indicator .dot { width: 8px; height: 8px; background-color: #dc2626; border-radius: 50%; animation: pulse 2s infinite; }
     
-    .templates-box { background-color: #f3f4f6; padding: 1rem; border-radius: 1rem; margin-bottom: 1.5rem; border: 1px dashed #d1d5db; }
+    .templates-box { background-color: #f3f4f6; padding: 1rem; border-radius: 1rem; margin-bottom: 1.5rem; border: 1px dashed #d1d5db; transition: all 0.3s ease; }
+    .access-input { flex: 1; padding: 0.5rem 1rem; border-radius: 0.75rem; border: 1px solid var(--border-color); outline: none; font-size: 0.875rem; }
+    .access-input:focus { border-color: var(--primary); }
+    .btn-unlock { background-color: var(--primary); color: white; padding: 0.5rem 1.25rem; border-radius: 0.75rem; font-weight: 600; border: none; cursor: pointer; transition: background-color 0.2s; display: flex; align-items: center; gap: 0.5rem; }
+    .btn-unlock:hover { background-color: var(--primary-hover); }
+    .btn-unlock:disabled { opacity: 0.7; cursor: not-allowed; }
     
     button { border: none; background: none; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
     button:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(70%); }
@@ -127,8 +132,19 @@
         </select>
       </div>
 
+      <div id="unlock-container" class="templates-box">
+        <span style="font-size: 0.875rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">Unlock Templates:</span>
+        <div style="display: flex; gap: 0.5rem; width: 100%;">
+          <input type="password" id="access-code" class="access-input" placeholder="Enter Access Code">
+          <button id="unlock-btn" class="btn-unlock"><i data-lucide="unlock" style="width: 16px; height: 16px;"></i> Unlock</button>
+        </div>
+      </div>
+
       <div id="templates-container" class="templates-box hidden">
-        <span style="font-size: 0.875rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 0.5rem;">Load a Template:</span>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+          <span style="font-size: 0.875rem; font-weight: 600; color: var(--text-muted);">Load a Template:</span>
+          <i data-lucide="check-circle-2" style="color: #16a34a; width: 16px; height: 16px;"></i>
+        </div>
         <select id="template-select" class="lang-select">
           <option value="">Select a template...</option>
         </select>
@@ -214,36 +230,60 @@
     const cameraBanner = document.getElementById('camera-banner');
     const errorBox = document.getElementById('error-box'); const errorText = document.getElementById('error-text');
 
+    // Make sure your GAS URL matches your latest deployment
     const GAS_BACKEND_URL = "https://script.google.com/macros/s/AKfycbx92-VcS0HEe8I6nC8F0QQziBfgBjuFogpu8gfxj-LoNSXQsEsJhGxZSNSpkTFtRVU8/exec";
     
     let isDailyRecording = false; let isGoogleRecording = false;
     let finalText = ''; let currentQrUrl = '';
     let mediaRecorder; let audioChunks = [];
 
-    // On Load: Attempt to fetch templates from GAS
-    async function fetchTemplates() {
+    // --- TEMPLATE UNLOCK LOGIC ---
+    const unlockBtn = document.getElementById('unlock-btn');
+    const accessCodeInput = document.getElementById('access-code');
+    
+    unlockBtn.addEventListener('click', async () => {
+      const code = accessCodeInput.value.trim();
+      if (!code) { showError("Please enter an access code."); return; }
+      
+      showError('');
+      unlockBtn.disabled = true;
+      unlockBtn.innerHTML = '<i data-lucide="loader" class="animate-spin" style="width: 16px; height: 16px;"></i> Checking';
+      lucide.createIcons();
+
       try {
         const response = await fetch(GAS_BACKEND_URL, {
           method: "POST",
-          body: JSON.stringify({ action: "getTemplates" })
+          body: JSON.stringify({ action: "getTemplates", code: code })
         });
         const data = await response.json();
         
-        // Assuming your backend returns { success: true, templates: [{name: "T1", text: "Hello"}, ...] }
         if (data.success && data.templates && data.templates.length > 0) {
+          // Success! Hide unlock box, show templates dropdown
+          document.getElementById('unlock-container').classList.add('hidden');
           document.getElementById('templates-container').classList.remove('hidden');
+          
           data.templates.forEach(t => {
             const option = document.createElement('option');
             option.value = t.text;
             option.textContent = t.name;
             templateSelect.appendChild(option);
           });
+        } else {
+          showError(data.error || "Invalid access code or no templates found.");
         }
       } catch (err) {
-        console.log("No templates configured or backend not ready yet.");
+        showError("Failed to verify code with server.");
+      } finally {
+        unlockBtn.disabled = false;
+        unlockBtn.innerHTML = '<i data-lucide="unlock" style="width: 16px; height: 16px;"></i> Unlock';
+        lucide.createIcons();
       }
-    }
-    window.addEventListener('load', fetchTemplates);
+    });
+
+    // Enter key submits access code
+    accessCodeInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') unlockBtn.click();
+    });
 
     // Insert template into main dictation box
     templateSelect.addEventListener('change', (e) => {
@@ -431,7 +471,6 @@
     document.getElementById('generate-btn').addEventListener('click', async () => {
       let textToProcess = translatedArea.value.trim();
       
-      // If translation box is empty, auto-translate first
       if (!textToProcess) { 
         const originalText = textArea.value.trim();
         if (!originalText) {
@@ -472,7 +511,7 @@
     function getCombinedCanvas() {
       const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
       const qrSize = 300; const padding = 20; const fontSize = 16; const lineHeight = 24; 
-      const textToDraw = translatedArea.value.trim(); // Uses translated text
+      const textToDraw = translatedArea.value.trim();
       ctx.font = fontSize + 'px system-ui, sans-serif'; const words = textToDraw.split(' ');
       let line = ''; let lines = [];
       for(let i = 0; i < words.length; i++) {

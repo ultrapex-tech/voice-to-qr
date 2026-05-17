@@ -538,7 +538,7 @@
       document.getElementById('generate-btn').innerHTML = '<i data-lucide="loader" class="animate-spin"></i> Generating...'; lucide.createIcons();
 
       try {
-        currentQrUrl = 'https://quickchart.io/qr?size=300&margin=1&text=' + encodeURIComponent(textToProcess.replace(/\r?\n/g, '\r\n'));
+        currentQrUrl = 'https://quickchart.io/qr?size=900&margin=1&text=' + encodeURIComponent(textToProcess.replace(/\r?\n/g, '\r\n'));
         document.getElementById('qr-image').src = currentQrUrl;
         document.getElementById('qr-placeholder').classList.add('hidden'); document.getElementById('qr-result').classList.remove('hidden');
       } catch (err) { showError("Failed to generate QR."); } 
@@ -553,46 +553,101 @@
     });
 
     function getCombinedCanvas() {
-      const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
-      const qrSize = 300; const padding = 20; const fontSize = 16; const lineHeight = 24; 
+      const canvas = document.createElement('canvas'); 
+      const ctx = canvas.getContext('2d');
+      
+      // Use a scale multiplier for high-res output
+      const scale = 3; 
+      const qrSize = 300 * scale;     // 900px QR Code
+      const padding = 40 * scale;     // 120px Padding
+      const fontSize = 22 * scale;    // 66px Font size for great readability
+      const lineHeight = 32 * scale;  // 96px Line height
+      
       const textToDraw = translatedArea.value.trim();
-      ctx.font = fontSize + 'px system-ui, sans-serif'; const words = textToDraw.split(' ');
-      let line = ''; let lines = [];
-      for(let i = 0; i < words.length; i++) {
-        let testLine = line + words[i] + ' ';
-        if(ctx.measureText(testLine).width > qrSize && i > 0) { lines.push(line); line = words[i] + ' '; } else line = testLine;
+      ctx.font = `600 ${fontSize}px system-ui, sans-serif`; // Made font slightly bolder (600)
+      
+      // Respect existing newlines (paragraphs), then wrap words
+      const paragraphs = textToDraw.split('\n');
+      let lines = [];
+      
+      for (let p = 0; p < paragraphs.length; p++) {
+        let words = paragraphs[p].split(' ');
+        let currentLine = '';
+        
+        // Preserve empty lines for paragraph spacing
+        if (words.length === 1 && words[0] === '') {
+            lines.push(''); 
+            continue;
+        }
+
+        for (let i = 0; i < words.length; i++) {
+          let testLine = currentLine + words[i] + ' ';
+          // Check if adding the next word exceeds the QR width
+          if (ctx.measureText(testLine).width > qrSize && i > 0) {
+            lines.push(currentLine.trim());
+            currentLine = words[i] + ' ';
+          } else {
+            currentLine = testLine;
+          }
+        }
+        lines.push(currentLine.trim());
       }
-      lines.push(line);
-      canvas.width = qrSize + (padding * 2); canvas.height = qrSize + (padding * 2) + (lines.length * lineHeight) + padding; 
-      ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Calculate total canvas dimensions dynamically
+      canvas.width = qrSize + (padding * 2); 
+      canvas.height = qrSize + (padding * 2) + (lines.length * lineHeight) + padding; 
+      
+      // Draw solid white background (Required for JPEG)
+      ctx.fillStyle = '#ffffff'; 
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw high-res QR image
       ctx.drawImage(document.getElementById('qr-image'), padding, padding, qrSize, qrSize);
-      ctx.fillStyle = '#111827'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-      let yPosition = qrSize + (padding * 2);
-      for(let i = 0; i < lines.length; i++) { ctx.fillText(lines[i], canvas.width / 2, yPosition); yPosition += lineHeight; }
+      
+      // Draw Text
+      ctx.fillStyle = '#111827'; 
+      ctx.textAlign = 'center'; 
+      ctx.textBaseline = 'top';
+      
+      let yPosition = qrSize + (padding * 1.5);
+      for(let i = 0; i < lines.length; i++) { 
+        ctx.fillText(lines[i], canvas.width / 2, yPosition); 
+        yPosition += lineHeight; 
+      }
+      
       return canvas;
     }
 
     document.getElementById('download-btn').addEventListener('click', () => {
       if (!currentQrUrl || !document.getElementById('qr-image').complete) return;
       try {
-        const link = document.createElement('a'); link.href = getCombinedCanvas().toDataURL('image/png');
-        link.download = 'voice-qr-combined.png'; document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        const link = document.createElement('a'); 
+        // Export as High-Quality JPEG
+        link.href = getCombinedCanvas().toDataURL('image/jpeg', 0.95);
+        link.download = 'voice-qr-combined.jpg'; 
+        document.body.appendChild(link); 
+        link.click(); 
+        document.body.removeChild(link);
       } catch (err) { showError("Could not generate image."); }
     });
 
     document.getElementById('share-btn').addEventListener('click', async () => {
       if (!currentQrUrl || !document.getElementById('qr-image').complete) { showError("Generate a QR code first."); return; }
       try {
+        // Export as High-Quality JPEG Blob
         getCombinedCanvas().toBlob(async (blob) => {
-          const file = new File([blob], 'voice-qr-combined.png', { type: 'image/png' });
+          const file = new File([blob], 'voice-qr-combined.jpg', { type: 'image/jpeg' });
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
             try { await navigator.share({ files: [file], title: 'Translated Voice QR' }); } catch (err) {}
           } else {
             alert("Your browser doesn't support direct image sharing. The image will download, and WhatsApp will open!");
-            const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'voice-qr-combined.png'; link.click();
+            const link = document.createElement('a'); 
+            link.href = URL.createObjectURL(blob); 
+            link.download = 'voice-qr-combined.jpg'; 
+            link.click();
             window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(translatedArea.value.trim()), '_blank');
           }
-        }, 'image/png');
+        }, 'image/jpeg', 0.95);
       } catch (err) { showError("Failed to prepare image for sharing."); }
     });
   </script>

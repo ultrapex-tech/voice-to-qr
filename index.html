@@ -115,7 +115,17 @@
   </style>
 </head>
 <body>
-  <div class="container">
+  <div id="copy-page" class="hidden" style="min-height: 100vh; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; text-align: center;">
+    <div class="card" style="max-width: 600px; width: 100%;">
+      <i data-lucide="clipboard-list" style="width: 48px; height: 48px; color: var(--primary); margin-bottom: 1rem; margin-left: auto; margin-right: auto;"></i>
+      <h1 class="title" style="justify-content: center; margin-bottom: 1rem;">Scanned Text</h1>
+      <textarea id="copy-textarea" readonly style="min-height: 250px; margin-bottom: 1.5rem; background: #f8fafc; cursor: text; font-size: 1.1rem;"></textarea>
+      <button id="do-copy-btn" class="btn-translate" style="width: 100%; height: 70px; font-size: 1.25rem;"><i data-lucide="copy"></i> Copy to Clipboard</button>
+      <p id="copy-success-msg" class="hidden" style="color: #16a34a; font-weight: 600; margin-top: 1rem;">Copied successfully! You can close this window.</p>
+    </div>
+  </div>
+  
+  <div id = "main-pp" class="container">
     <div class="card">
       <div class="header">
         <h1 class="title">Voice & Scan to QR</h1>
@@ -538,7 +548,12 @@
       document.getElementById('generate-btn').innerHTML = '<i data-lucide="loader" class="animate-spin"></i> Generating...'; lucide.createIcons();
 
       try {
-        currentQrUrl = 'https://quickchart.io/qr?size=900&margin=4&ecLevel=L&text=' + encodeURIComponent(textToProcess.replace(/\r?\n/g, '\r\n'));
+        // Get the base URL of your app (e.g., https://yourname.github.io/your-repo/)
+      const baseUrl = window.location.href.split('?')[0];
+      // Attach the text to the URL
+      const copyUrl = baseUrl + '?copy=' + encodeURIComponent(textToProcess.replace(/\r?\n/g, '\r\n'));
+      // Generate the QR code containing the URL instead of raw text
+      currentQrUrl = 'https://quickchart.io/qr?size=900&margin=4&ecLevel=L&text=' + encodeURIComponent(copyUrl);
         document.getElementById('qr-placeholder').classList.add('hidden'); document.getElementById('qr-result').classList.remove('hidden');
       } catch (err) { showError("Failed to generate QR."); } 
       finally { document.getElementById('generate-btn').disabled = false; document.getElementById('generate-btn').innerHTML = '<i data-lucide="qr-code"></i> Create QR'; lucide.createIcons(); }
@@ -656,6 +671,45 @@
           }
         }, 'image/jpeg', 0.95);
       } catch (err) { showError("Failed to prepare image for sharing."); }
+    });
+
+    // --- COPY PAGE LOGIC ---
+    window.addEventListener('load', () => {
+      // Check if the URL has "?copy=..." in it
+      const urlParams = new URLSearchParams(window.location.search);
+      const copyText = urlParams.get('copy');
+      
+      if (copyText) {
+        // Hide the main app and show the copy page
+        document.getElementById('main-app').classList.add('hidden');
+        document.getElementById('copy-page').classList.remove('hidden');
+        document.getElementById('copy-textarea').value = copyText;
+      }
+    });
+
+    // Execute the copy action when the button is tapped
+    document.getElementById('do-copy-btn').addEventListener('click', async () => {
+      const textToCopy = document.getElementById('copy-textarea').value;
+      const copyBtn = document.getElementById('do-copy-btn');
+      
+      try {
+        // Modern approach
+        await navigator.clipboard.writeText(textToCopy);
+        showSuccess();
+      } catch (err) {
+        // Fallback for older iOS versions
+        const textArea = document.getElementById('copy-textarea');
+        textArea.select();
+        document.execCommand('copy');
+        showSuccess();
+      }
+      
+      function showSuccess() {
+        copyBtn.innerHTML = '<i data-lucide="check-circle-2"></i> Copied!';
+        copyBtn.style.backgroundColor = '#16a34a'; // Turn button green
+        document.getElementById('copy-success-msg').classList.remove('hidden');
+        lucide.createIcons();
+      }
     });
   </script>
 </body>

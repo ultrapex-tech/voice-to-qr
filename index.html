@@ -560,25 +560,28 @@
       const qrSize = 900;     // 300 * 3
       const padding = 150;    // 50 * 3
       
-      const fontSize = 126;   // Hardcoded huge font
-      const lineHeight = 162; // Hardcoded large spacing
+      // 1. SMALLER FONT SIZE
+      const fontSize = 60;    // Reduced from 126
+      const lineHeight = 84;  // Reduced from 162
       
       const textToDraw = translatedArea.value.trim();
       
-      // Setup width early
       canvas.width = qrSize + (padding * 2); 
       
-      // 1. Set font to measure text accurately
       ctx.font = fontSize + 'px sans-serif'; 
       
+      // This splits the text by newlines, preserving the user's line breaks
       const paragraphs = textToDraw.split('\n');
       let lines = [];
-      const textWrapWidth = qrSize + padding; 
+      
+      // Text will wrap exactly at the right edge of the QR code
+      const textWrapWidth = qrSize; 
       
       for (let p = 0; p < paragraphs.length; p++) {
         let words = paragraphs[p].split(' ');
         let currentLine = '';
         
+        // This keeps the empty lines intact to create paragraph spacing
         if (words.length === 1 && words[0] === '') {
             lines.push(''); 
             continue;
@@ -586,7 +589,6 @@
 
         for (let i = 0; i < words.length; i++) {
           let testLine = currentLine + words[i] + ' ';
-          // Measure the text
           if (ctx.measureText(testLine).width > textWrapWidth && i > 0) {
             lines.push(currentLine.trim());
             currentLine = words[i] + ' ';
@@ -597,32 +599,33 @@
         lines.push(currentLine.trim());
       }
       
-      // Resizing height wipes the canvas memory!
       canvas.height = qrSize + (padding * 2) + (lines.length * lineHeight) + padding; 
       
-      // Draw white background
       ctx.fillStyle = '#ffffff'; 
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       
-      // Draw QR Code
       ctx.drawImage(document.getElementById('qr-image'), padding, padding, qrSize, qrSize);
       
-      // 2. Re-apply all text settings AFTER the resize
       ctx.font = fontSize + 'px sans-serif'; 
       ctx.fillStyle = '#111827'; 
-      ctx.textAlign = 'center'; 
+      
+      // 2. LEFT ALIGN THE TEXT
+      ctx.textAlign = 'left'; 
       ctx.textBaseline = 'top';
       
-      let yPosition = qrSize + (padding * 1.2);
+      let yPosition = qrSize + (padding * 1.5);
+      
       for(let i = 0; i < lines.length; i++) { 
-        // Paranoid mode: re-apply font right before drawing every single line
         ctx.font = fontSize + 'px sans-serif'; 
-        ctx.fillText(lines[i], canvas.width / 2, yPosition); 
+        
+        // 3. DRAW AT THE LEFT MARGIN (padding) instead of canvas.width / 2
+        ctx.fillText(lines[i], padding, yPosition); 
         yPosition += lineHeight; 
       }
       
       return canvas;
     }
+    
     document.getElementById('download-btn').addEventListener('click', () => {
       if (!currentQrUrl || !document.getElementById('qr-image').complete) return;
       try {

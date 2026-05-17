@@ -552,6 +552,7 @@
         document.getElementById('generate-btn').innerHTML = '<i data-lucide="qr-code"></i> Create QR'; 
         lucide.createIcons(); 
       }
+    })
 
     document.getElementById('clear-btn').addEventListener('click', () => {
       finalText = ''; textArea.value = ''; translatedArea.value = ''; currentQrUrl = ''; document.getElementById('qr-image').src = '';

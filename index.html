@@ -145,9 +145,17 @@
           <span style="font-size: 0.875rem; font-weight: 600; color: var(--text-muted);">Load a Template:</span>
           <i data-lucide="check-circle-2" style="color: #16a34a; width: 16px; height: 16px;"></i>
         </div>
-        <select id="template-select" class="lang-select">
-          <option value="">Select a template...</option>
-        </select>
+        <div style="display: flex; gap: 0.5rem; width: 100%;">
+          <select id="laterality-select" class="lang-select" style="flex: 1;">
+            <option value="N/A">Laterality: N/A</option>
+            <option value="Left">Left</option>
+            <option value="Right">Right</option>
+            <option value="Bilateral">Bilateral</option>
+          </select>
+          <select id="template-select" class="lang-select" style="flex: 2;">
+            <option value="">Select a template...</option>
+          </select>
+        </div>
       </div>
 
       <div id="error-box" class="error-box hidden"><i data-lucide="alert-circle"></i><p id="error-text"></p></div>
@@ -286,9 +294,26 @@
     });
 
     // Insert template into main dictation box
+    // Insert template into main dictation box and apply laterality
     templateSelect.addEventListener('change', (e) => {
       if (e.target.value) {
-        finalText = e.target.value; // Overwrites the existing text entirely
+        let selectedText = e.target.value;
+        const laterality = document.getElementById('laterality-select').value;
+
+        // Apply laterality logic if a side is chosen
+        if (laterality !== 'N/A') {
+          if (selectedText.includes('PPP for ')) {
+            // Add right after the first occurrence of "PPP for "
+            selectedText = selectedText.replace('PPP for ', 'PPP for ' + laterality + ' ');
+          } else {
+            // Append as (Laterality) to the end of the first line
+            let lines = selectedText.split('\n');
+            lines[0] = lines[0] + ' (' + laterality + ')';
+            selectedText = lines.join('\n');
+          }
+        }
+
+        finalText = selectedText; // Overwrites the existing text entirely
         textArea.value = finalText;
         translatedArea.value = '';  // Clears out any old translation too
         e.target.value = "";        // Reset select dropdown

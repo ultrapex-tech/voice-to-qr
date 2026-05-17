@@ -115,15 +115,6 @@
   </style>
 </head>
 <body>
-  <div id="copy-page" class="hidden" style="min-height: 100vh; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; text-align: center;">
-    <div class="card" style="max-width: 600px; width: 100%;">
-      <i data-lucide="clipboard-list" style="width: 48px; height: 48px; color: var(--primary); margin-bottom: 1rem; margin-left: auto; margin-right: auto;"></i>
-      <h1 class="title" style="justify-content: center; margin-bottom: 1rem;">Scanned Text</h1>
-      <textarea id="copy-textarea" readonly style="min-height: 250px; margin-bottom: 1.5rem; background: #f8fafc; cursor: text; font-size: 1.1rem;"></textarea>
-      <button id="do-copy-btn" class="btn-translate" style="width: 100%; height: 70px; font-size: 1.25rem;"><i data-lucide="copy"></i> Copy to Clipboard</button>
-      <p id="copy-success-msg" class="hidden" style="color: #16a34a; font-weight: 600; margin-top: 1rem;">Copied successfully! You can close this window.</p>
-    </div>
-  </div>
   
   <div id = "main-app" class="container">
     <div class="card">
@@ -547,41 +538,15 @@
       showError(''); document.getElementById('generate-btn').disabled = true;
       document.getElementById('generate-btn').innerHTML = '<i data-lucide="loader" class="animate-spin"></i> Generating...'; lucide.createIcons();
 
-      try {
-        // Get the base URL of your app
-        const baseUrl = window.location.href.split('?')[0];
-        
-        // Attach the text to the URL
-        const copyUrl = baseUrl + '?copy=' + encodeURIComponent(textToProcess.replace(/\r?\n/g, '\r\n'));
-
-        // Send a POST request to QuickChart to bypass URL length limits
-        const response = await fetch('https://quickchart.io/qr', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            text: copyUrl,
-            size: 900,
-            margin: 4,
-            ecLevel: 'L',
-            format: 'png'
-          })
-        });
-
-        if (!response.ok) throw new Error("Failed to generate QR");
-
-        // Convert the response into a local, temporary image URL
-        const imageBlob = await response.blob();
-        currentQrUrl = URL.createObjectURL(imageBlob);
-        
-        // Remove the CORS restriction since the image is now local
-        document.getElementById('qr-image').removeAttribute('crossorigin');
+    try {
+        // Back to the simple URL method with margin=4 and ecLevel=L
+        currentQrUrl = 'https://quickchart.io/qr?size=900&margin=4&ecLevel=L&text=' + encodeURIComponent(textToProcess.replace(/\r?\n/g, '\r\n'));
         document.getElementById('qr-image').src = currentQrUrl;
         
         document.getElementById('qr-placeholder').classList.add('hidden'); 
         document.getElementById('qr-result').classList.remove('hidden');
-        
       } catch (err) { 
-        showError("Failed to generate QR. Text may be too long."); 
+        showError("Failed to generate QR."); 
       } finally { 
         document.getElementById('generate-btn').disabled = false; 
         document.getElementById('generate-btn').innerHTML = '<i data-lucide="qr-code"></i> Create QR'; 
@@ -702,44 +667,7 @@
       } catch (err) { showError("Failed to prepare image for sharing."); }
     });
 
-    // --- COPY PAGE LOGIC ---
-    window.addEventListener('load', () => {
-      // Check if the URL has "?copy=..." in it
-      const urlParams = new URLSearchParams(window.location.search);
-      const copyText = urlParams.get('copy');
-      
-      if (copyText) {
-        // Hide the main app and show the copy page
-        document.getElementById('main-app').classList.add('hidden');
-        document.getElementById('copy-page').classList.remove('hidden');
-        document.getElementById('copy-textarea').value = copyText;
-      }
-    });
-
-    // Execute the copy action when the button is tapped
-    document.getElementById('do-copy-btn').addEventListener('click', async () => {
-      const textToCopy = document.getElementById('copy-textarea').value;
-      const copyBtn = document.getElementById('do-copy-btn');
-      
-      try {
-        // Modern approach
-        await navigator.clipboard.writeText(textToCopy);
-        showSuccess();
-      } catch (err) {
-        // Fallback for older iOS versions
-        const textArea = document.getElementById('copy-textarea');
-        textArea.select();
-        document.execCommand('copy');
-        showSuccess();
-      }
-      
-      function showSuccess() {
-        copyBtn.innerHTML = '<i data-lucide="check-circle-2"></i> Copied!';
-        copyBtn.style.backgroundColor = '#16a34a'; // Turn button green
-        document.getElementById('copy-success-msg').classList.remove('hidden');
-        lucide.createIcons();
-      }
-    });
+   
   </script>
 </body>
 </html>

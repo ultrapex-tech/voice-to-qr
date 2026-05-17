@@ -560,14 +560,12 @@
       const qrSize = 300 * scale;     
       const padding = 50 * scale;     
       
-      // Use Math.floor to guarantee clean whole numbers for canvas rendering
-      const fontSize = Math.floor(42 * scale);    // 126px font
-      const lineHeight = Math.floor(54 * scale);  // 162px line spacing
+      const fontSize = Math.floor(42 * scale);    
+      const lineHeight = Math.floor(54 * scale);  
       
       const textToDraw = translatedArea.value.trim();
       
-      // *** THE FIX: Bulletproof font string ***
-      // We use "bold" instead of "600" and standard "Arial" so the browser can't reject it.
+      // 1. Set the font so we can accurately measure the text
       ctx.font = 'bold ' + fontSize + 'px Arial, sans-serif'; 
       
       const paragraphs = textToDraw.split('\n');
@@ -586,6 +584,7 @@
 
         for (let i = 0; i < words.length; i++) {
           let testLine = currentLine + words[i] + ' ';
+          // Measure the text using the large font
           if (ctx.measureText(testLine).width > textWrapWidth && i > 0) {
             lines.push(currentLine.trim());
             currentLine = words[i] + ' ';
@@ -596,8 +595,12 @@
         lines.push(currentLine.trim());
       }
       
+      // Resizing the canvas happens here. This wipes all context settings!
       canvas.width = qrSize + (padding * 2); 
       canvas.height = qrSize + (padding * 2) + (lines.length * lineHeight) + padding; 
+      
+      // 2. RE-APPLY THE FONT after resizing the canvas
+      ctx.font = 'bold ' + fontSize + 'px Arial, sans-serif'; 
       
       ctx.fillStyle = '#ffffff'; 
       ctx.fillRect(0, 0, canvas.width, canvas.height);

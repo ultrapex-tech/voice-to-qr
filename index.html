@@ -556,25 +556,30 @@
       const canvas = document.createElement('canvas'); 
       const ctx = canvas.getContext('2d');
       
-      // Use a scale multiplier for high-res output
       const scale = 3; 
-      const qrSize = 300 * scale;     // 900px QR Code
-      const padding = 40 * scale;     // 120px Padding
-      const fontSize = 22 * scale;    // 66px Font size for great readability
-      const lineHeight = 32 * scale;  // 96px Line height
+      const qrSize = 300 * scale;     
+      const padding = 50 * scale;     // Slightly wider padding for a cleaner border
+      
+      // *** THE FIX: Massively increased font size and tightened line height ***
+      const fontSize = 42 * scale;    
+      const lineHeight = 54 * scale;  
       
       const textToDraw = translatedArea.value.trim();
-      ctx.font = `600 ${fontSize}px system-ui, sans-serif`; // Made font slightly bolder (600)
       
-      // Respect existing newlines (paragraphs), then wrap words
+      // Using string concatenation here to ensure the browser applies the font correctly
+      ctx.font = '600 ' + fontSize + 'px system-ui, sans-serif'; 
+      
       const paragraphs = textToDraw.split('\n');
       let lines = [];
+      
+      // Calculate the max width the text is allowed to stretch (Canvas width minus margins)
+      const maxTextWidth = qrSize + (padding * 2) - (padding * 2); // Basically just qrSize, but we can expand it if needed. Let's make it wider:
+      const textWrapWidth = qrSize + padding; 
       
       for (let p = 0; p < paragraphs.length; p++) {
         let words = paragraphs[p].split(' ');
         let currentLine = '';
         
-        // Preserve empty lines for paragraph spacing
         if (words.length === 1 && words[0] === '') {
             lines.push(''); 
             continue;
@@ -582,8 +587,8 @@
 
         for (let i = 0; i < words.length; i++) {
           let testLine = currentLine + words[i] + ' ';
-          // Check if adding the next word exceeds the QR width
-          if (ctx.measureText(testLine).width > (qrSize-150) && i > 0) {
+          // *** THE FIX: Wrap text based on wider boundaries ***
+          if (ctx.measureText(testLine).width > textWrapWidth && i > 0) {
             lines.push(currentLine.trim());
             currentLine = words[i] + ' ';
           } else {
@@ -593,23 +598,20 @@
         lines.push(currentLine.trim());
       }
       
-      // Calculate total canvas dimensions dynamically
       canvas.width = qrSize + (padding * 2); 
       canvas.height = qrSize + (padding * 2) + (lines.length * lineHeight) + padding; 
       
-      // Draw solid white background (Required for JPEG)
       ctx.fillStyle = '#ffffff'; 
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       
-      // Draw high-res QR image
       ctx.drawImage(document.getElementById('qr-image'), padding, padding, qrSize, qrSize);
       
-      // Draw Text
       ctx.fillStyle = '#111827'; 
       ctx.textAlign = 'center'; 
       ctx.textBaseline = 'top';
       
-      let yPosition = qrSize + (padding * 1.5);
+      // Start drawing text slightly closer to the QR code
+      let yPosition = qrSize + (padding * 1.2);
       for(let i = 0; i < lines.length; i++) { 
         ctx.fillText(lines[i], canvas.width / 2, yPosition); 
         yPosition += lineHeight; 

@@ -538,8 +538,7 @@
       document.getElementById('generate-btn').innerHTML = '<i data-lucide="loader" class="animate-spin"></i> Generating...'; lucide.createIcons();
 
       try {
-        currentQrUrl = 'https://quickchart.io/qr?size=900&margin=1&text=' + encodeURIComponent(textToProcess.replace(/\r?\n/g, '\r\n'));
-        document.getElementById('qr-image').src = currentQrUrl;
+        currentQrUrl = 'https://quickchart.io/qr?size=900&margin=4&ecLevel=L&text=' + encodeURIComponent(textToProcess.replace(/\r?\n/g, '\r\n'));
         document.getElementById('qr-placeholder').classList.add('hidden'); document.getElementById('qr-result').classList.remove('hidden');
       } catch (err) { showError("Failed to generate QR."); } 
       finally { document.getElementById('generate-btn').disabled = false; document.getElementById('generate-btn').innerHTML = '<i data-lucide="qr-code"></i> Create QR'; lucide.createIcons(); }

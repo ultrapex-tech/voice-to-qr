@@ -548,16 +548,45 @@
       document.getElementById('generate-btn').innerHTML = '<i data-lucide="loader" class="animate-spin"></i> Generating...'; lucide.createIcons();
 
       try {
-        // Get the base URL of your app (e.g., https://yourname.github.io/your-repo/)
-      const baseUrl = window.location.href.split('?')[0];
-      // Attach the text to the URL
-      const copyUrl = baseUrl + '?copy=' + encodeURIComponent(textToProcess.replace(/\r?\n/g, '\r\n'));
-      // Generate the QR code containing the URL instead of raw text
-      currentQrUrl = 'https://quickchart.io/qr?size=900&margin=4&ecLevel=L&text=' + encodeURIComponent(copyUrl);
-        document.getElementById('qr-placeholder').classList.add('hidden'); document.getElementById('qr-result').classList.remove('hidden');
-      } catch (err) { showError("Failed to generate QR."); } 
-      finally { document.getElementById('generate-btn').disabled = false; document.getElementById('generate-btn').innerHTML = '<i data-lucide="qr-code"></i> Create QR'; lucide.createIcons(); }
-    });
+        // Get the base URL of your app
+        const baseUrl = window.location.href.split('?')[0];
+        
+        // Attach the text to the URL
+        const copyUrl = baseUrl + '?copy=' + encodeURIComponent(textToProcess.replace(/\r?\n/g, '\r\n'));
+
+        // Send a POST request to QuickChart to bypass URL length limits
+        const response = await fetch('https://quickchart.io/qr', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: copyUrl,
+            size: 900,
+            margin: 4,
+            ecLevel: 'L',
+            format: 'png'
+          })
+        });
+
+        if (!response.ok) throw new Error("Failed to generate QR");
+
+        // Convert the response into a local, temporary image URL
+        const imageBlob = await response.blob();
+        currentQrUrl = URL.createObjectURL(imageBlob);
+        
+        // Remove the CORS restriction since the image is now local
+        document.getElementById('qr-image').removeAttribute('crossorigin');
+        document.getElementById('qr-image').src = currentQrUrl;
+        
+        document.getElementById('qr-placeholder').classList.add('hidden'); 
+        document.getElementById('qr-result').classList.remove('hidden');
+        
+      } catch (err) { 
+        showError("Failed to generate QR. Text may be too long."); 
+      } finally { 
+        document.getElementById('generate-btn').disabled = false; 
+        document.getElementById('generate-btn').innerHTML = '<i data-lucide="qr-code"></i> Create QR'; 
+        lucide.createIcons(); 
+      }
 
     document.getElementById('clear-btn').addEventListener('click', () => {
       finalText = ''; textArea.value = ''; translatedArea.value = ''; currentQrUrl = ''; document.getElementById('qr-image').src = '';

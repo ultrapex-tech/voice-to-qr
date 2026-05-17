@@ -209,10 +209,13 @@
     <div class="card card-right">
       <div id="qr-result" class="qr-result hidden">
         <div class="qr-box"><img id="qr-image" crossorigin="anonymous" src="" class="qr-image"/></div>
-        <div class="action-buttons">
+        <div class="action-buttons" style="margin-bottom: 0.5rem;">
           <button id="download-btn" class="btn-download"><i data-lucide="image-down"></i> Save</button>
           <button id="share-btn" class="btn-share"><i data-lucide="share-2"></i> Share</button>
         </div>
+        <p style="color: #800020; font-style: italic; font-size: 0.85rem; text-align: center; max-width: 280px; margin-top: 0.5rem; font-weight: 500;">
+          Use the scanner from your local computer to scan it to reduce your typing.
+        </p>
       </div>
       <div id="qr-placeholder" class="qr-placeholder"><i data-lucide="qr-code"></i><p>Your QR code will appear here</p></div>
     </div>
@@ -569,28 +572,28 @@
       const qrSize = 900;     // 300 * 3
       const padding = 150;    // 50 * 3
       
-      // 1. SMALLER FONT SIZE
-      const fontSize = 60;    // Reduced from 126
-      const lineHeight = 84;  // Reduced from 162
+      // MAIN TEXT SETTINGS
+      const fontSize = 60;    
+      const lineHeight = 84;  
+      
+      // FOOTNOTE SETTINGS
+      const footnoteText = "Use the scanner from your local computer to scan it to reduce your typing.";
+      const footnoteFontSize = 45; 
+      const footnoteLineHeight = 65;
       
       const textToDraw = translatedArea.value.trim();
-      
       canvas.width = qrSize + (padding * 2); 
       
+      // 1. Process Main Text
       ctx.font = fontSize + 'px sans-serif'; 
-      
-      // This splits the text by newlines, preserving the user's line breaks
       const paragraphs = textToDraw.split('\n');
       let lines = [];
-      
-      // Text will wrap exactly at the right edge of the QR code
       const textWrapWidth = qrSize; 
       
       for (let p = 0; p < paragraphs.length; p++) {
         let words = paragraphs[p].split(' ');
         let currentLine = '';
         
-        // This keeps the empty lines intact to create paragraph spacing
         if (words.length === 1 && words[0] === '') {
             lines.push(''); 
             continue;
@@ -608,28 +611,55 @@
         lines.push(currentLine.trim());
       }
       
-      canvas.height = qrSize + (padding * 2) + (lines.length * lineHeight) + padding; 
+      // 2. Process Footnote Text
+      ctx.font = 'italic ' + footnoteFontSize + 'px sans-serif';
+      let footnoteWords = footnoteText.split(' ');
+      let footnoteLines = [];
+      let currentFLine = '';
       
+      for (let i = 0; i < footnoteWords.length; i++) {
+        let testLine = currentFLine + footnoteWords[i] + ' ';
+        if (ctx.measureText(testLine).width > textWrapWidth && i > 0) {
+          footnoteLines.push(currentFLine.trim());
+          currentFLine = footnoteWords[i] + ' ';
+        } else {
+          currentFLine = testLine;
+        }
+      }
+      footnoteLines.push(currentFLine.trim());
+      
+      // 3. Calculate new Canvas Height (including footnote space)
+      const gapBeforeFootnote = 80;
+      canvas.height = qrSize + (padding * 2) + (lines.length * lineHeight) + gapBeforeFootnote + (footnoteLines.length * footnoteLineHeight) + padding; 
+      
+      // Draw Background
       ctx.fillStyle = '#ffffff'; 
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       
+      // Draw QR Code
       ctx.drawImage(document.getElementById('qr-image'), padding, padding, qrSize, qrSize);
       
-      ctx.font = fontSize + 'px sans-serif'; 
+      // 4. Draw Main Text
       ctx.fillStyle = '#111827'; 
-      
-      // 2. LEFT ALIGN THE TEXT
       ctx.textAlign = 'left'; 
       ctx.textBaseline = 'top';
-      
       let yPosition = qrSize + (padding * 1.5);
       
       for(let i = 0; i < lines.length; i++) { 
         ctx.font = fontSize + 'px sans-serif'; 
-        
-        // 3. DRAW AT THE LEFT MARGIN (padding) instead of canvas.width / 2
         ctx.fillText(lines[i], padding, yPosition); 
         yPosition += lineHeight; 
+      }
+      
+      // 5. Draw Footnote
+      yPosition += gapBeforeFootnote; // Add a nice gap before the footnote
+      ctx.fillStyle = '#800020'; // Wine red
+      ctx.textAlign = 'left';  // Center the footnote under the text
+      ctx.font = 'italic ' + footnoteFontSize + 'px sans-serif';
+      
+      for(let i = 0; i < footnoteLines.length; i++) { 
+        ctx.fillText(footnoteLines[i], canvas.width / 2, yPosition); 
+        yPosition += footnoteLineHeight; 
       }
       
       return canvas;

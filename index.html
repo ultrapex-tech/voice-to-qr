@@ -211,9 +211,9 @@
           </select>
         </div>
         
-        <button id="dict-toggle-btn" class="btn-dict-toggle dict-on" title="Toggle Medical Dictionary">
-          <i data-lucide="zap" style="width: 16px; height: 16px;"></i> 
-          <span>Dict: ON</span>
+        <button id="dict-toggle-btn" class="btn-dict-toggle dict-off" title="Toggle Medical Dictionary" disabled>
+          <i data-lucide="loader" class="animate-spin" style="width: 16px; height: 16px;"></i> 
+          <span>Loading...</span>
         </button>
       </div>
 
@@ -339,6 +339,8 @@
     const fuseOptions = { includeScore: true, threshold: 0.35 }; 
 
     async function loadDictionary() {
+      const dictToggleBtn = document.getElementById('dict-toggle-btn');
+      
       try {
         const response = await fetch(GAS_BACKEND_URL, {
           method: "POST",
@@ -369,6 +371,20 @@
         }
       } catch (err) {
         console.error("Failed to load medical dictionary.", err);
+        isAutocorrectEnabled = false; // Disable autocorrect logic if it fails to load
+      } finally {
+        // Unlock the button and set its visual state based on whether data loaded
+        dictToggleBtn.disabled = false;
+        
+        if (medicalVocabulary.length > 0) {
+          dictToggleBtn.className = 'btn-dict-toggle dict-on';
+          dictToggleBtn.innerHTML = '<i data-lucide="zap" style="width: 16px; height: 16px;"></i> <span>Dict: ON</span>';
+        } else {
+          dictToggleBtn.className = 'btn-dict-toggle dict-off';
+          dictToggleBtn.innerHTML = '<i data-lucide="zap-off" style="width: 16px; height: 16px;"></i> <span>Dict: Error</span>';
+        }
+        
+        lucide.createIcons(); // Force refresh the SVG icons
       }
     }
     

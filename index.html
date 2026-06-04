@@ -352,7 +352,12 @@
     // --- DICTIONARY & AUTOCORRECT LOGIC ---
     let medicalVocabulary = [];
     let fuse;
-    const fuseOptions = { includeScore: true, threshold: 0.35 }; 
+    const fuseOptions = { 
+      includeScore: true, 
+      threshold: 0.45,       // Increased from 0.35 to catch worse misspellings
+      distance: 100,         // Allows typos to be spread further across the word
+      ignoreLocation: true   // Focuses purely on character matching, regardless of order
+    };
 
     async function loadDictionary() {
       const dictToggleBtn = document.getElementById('dict-toggle-btn');

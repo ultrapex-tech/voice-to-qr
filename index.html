@@ -959,6 +959,7 @@
 
     dictToggleBtn.addEventListener('click', () => {
       isAutocorrectEnabled = !isAutocorrectEnabled; 
+      if (dictToggleBtn.disabled) return; 
       
       if (isAutocorrectEnabled) {
         dictToggleBtn.className = 'btn-dict-toggle dict-on';

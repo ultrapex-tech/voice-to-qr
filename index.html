@@ -121,10 +121,17 @@
       overflow-x: auto;
       padding-bottom: 0.5rem;
       margin-bottom: 0.5rem;
-      scrollbar-width: none; /* Hide scrollbar Firefox */
+      min-height: 44px; /* ADD THIS: reserves the space */
+      scrollbar-width: none; 
+      transition: opacity 0.2s ease-in-out; /* ADD THIS: smooth fade */
     }
     .suggestions-bar::-webkit-scrollbar {
-      display: none; /* Hide scrollbar Chrome/Safari */
+      display: none; 
+    }
+    /* ADD THIS NEW CLASS */
+    .hidden-invisible {
+      opacity: 0;
+      pointer-events: none;
     }
     .suggestion-chip {
       background-color: #f3e8ff;
@@ -236,7 +243,7 @@
           <label class="input-label">Original Text</label>
           <textarea id="text-input" placeholder="Tap a mic, scan a document, or type your text here..."></textarea>
           <div id="recording-indicator" class="recording-indicator hidden"><div class="dot"></div><span id="recording-text">RECORDING</span></div>
-          <div id="autocomplete-bar" class="suggestions-bar"></div>
+          <div id="autocomplete-bar" class="suggestions-bar hidden-invisible"></div>
         </div>
 
         <div class="input-wrapper">
@@ -446,7 +453,7 @@
       finalText = e.target.value; 
 
       if (!isAutocorrectEnabled) {
-        autocompleteBar.classList.add('hidden');
+        autocompleteBar.classList.add('hidden-invisible');
         return;
       }
       
@@ -470,13 +477,13 @@
         }
       }
       
-      autocompleteBar.classList.add('hidden');
+      autocompleteBar.classList.add('hidden-invisible');
       autocompleteBar.innerHTML = '';
     });
 
     function renderSuggestions(suggestions, typedWord, cursorPos) {
       autocompleteBar.innerHTML = '';
-      autocompleteBar.classList.remove('hidden');
+      autocompleteBar.classList.remove('hidden-invisible');
 
       suggestions.forEach(word => {
         const btn = document.createElement('button');
@@ -494,7 +501,7 @@
           textArea.setSelectionRange(newCursorPos, newCursorPos);
           textArea.focus();
           
-          autocompleteBar.classList.add('hidden');
+          autocompleteBar.classList.add('hidden-invisible');
         };
         autocompleteBar.appendChild(btn);
       });

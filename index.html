@@ -126,25 +126,41 @@
       transition: opacity 0.2s ease-in-out; /* ADD THIS: smooth fade */
       margin-top: 0.75rem;
     }
+   /* --- AUTOCOMPLETE SUGGESTIONS BAR --- */
+    .suggestions-bar {
+      display: flex;
+      gap: 0.25rem; /* Reduced the gap between chips */
+      overflow-x: auto;
+      scrollbar-width: none; 
+      transition: opacity 0.2s ease-in-out; 
+      
+      /* New floating properties */
+      position: absolute;
+      bottom: 0.5rem; /* Floats exactly at the bottom of the text input */
+      left: 0.5rem;
+      right: 0.5rem;
+      z-index: 10; /* Forces it to sit above the textarea layer */
+      padding: 0.25rem; /* Keeps the drop-shadow from getting clipped */
+    }
     .suggestions-bar::-webkit-scrollbar {
       display: none; 
     }
-    /* ADD THIS NEW CLASS */
     .hidden-invisible {
       opacity: 0;
       pointer-events: none;
     }
     .suggestion-chip {
-      background-color: #f3e8ff;
+      background-color: rgba(243, 232, 255, 0.95); /* Slight transparency */
       color: #7e22ce;
       border: 1px solid #d8b4fe;
-      padding: 0.4rem 0.8rem;
+      padding: 0.25rem 0.6rem; /* Reduced padding to match the smaller text */
       border-radius: 999px;
-      font-size: 0.875rem;
+      font-size: 0.75rem; /* Reduced font size */
       font-weight: 600;
       white-space: nowrap;
       cursor: pointer;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); /* Added a stronger shadow to emphasize the "floating" effect */
+      backdrop-filter: blur(2px); /* Blurs the text slightly underneath the chips */
     }
     .suggestion-chip:hover {
       background-color: #e9d5ff;
@@ -909,7 +925,7 @@
       } else {
         dictToggleBtn.className = 'btn-dict-toggle dict-off';
         dictToggleBtn.innerHTML = '<i data-lucide="zap-off" style="width: 16px; height: 16px;"></i> <span>Dict: OFF</span>';
-        document.getElementById('autocomplete-bar').classList.add('hidden'); 
+        document.getElementById('autocomplete-bar').classList.add('hidden-invisible'); 
       }
       
       lucide.createIcons(); // Force refresh the SVG icons

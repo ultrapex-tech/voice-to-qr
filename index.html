@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Voice & Scan to QR</title>
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2"></script>
   <style>
     :root {
       --primary: #4f46e5; --primary-hover: #4338ca;
@@ -112,6 +113,58 @@
     @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
     .animate-spin { animation: spin 1s linear infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+    /* --- AUTOCOMPLETE SUGGESTIONS BAR --- */
+    .suggestions-bar {
+      display: flex;
+      gap: 0.5rem;
+      overflow-x: auto;
+      padding-bottom: 0.5rem;
+      margin-bottom: 0.5rem;
+      scrollbar-width: none; /* Hide scrollbar Firefox */
+    }
+    .suggestions-bar::-webkit-scrollbar {
+      display: none; /* Hide scrollbar Chrome/Safari */
+    }
+    .suggestion-chip {
+      background-color: #f3e8ff;
+      color: #7e22ce;
+      border: 1px solid #d8b4fe;
+      padding: 0.4rem 0.8rem;
+      border-radius: 999px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .suggestion-chip:hover {
+      background-color: #e9d5ff;
+    }
+
+    /* --- AUTOCORRECT TOGGLE BUTTON --- */
+    .btn-dict-toggle {
+      padding: 0.5rem 1rem;
+      border-radius: 0.75rem;
+      font-weight: 600;
+      font-size: 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .dict-on {
+      background-color: #dcfce7;
+      color: #15803d;
+      border: 1px solid #bbf7d0;
+    }
+    .dict-off {
+      background-color: #f3f4f6;
+      color: #6b7280;
+      border: 1px solid #d1d5db;
+    }
+    
   </style>
 </head>
 <body>
@@ -123,14 +176,21 @@
         <p class="subtitle">Speak or scan a document, translate it, and generate a QR code.</p>
       </div>
 
-      <div class="top-bar">
-        <span style="font-size: 0.875rem; font-weight: 600; color: var(--text-muted);">Spoken Language:</span>
-        <select id="lang-select" class="lang-select" style="width: auto; flex: 1;">
-          <option value="en-US">English (US)</option>
-          <option value="zh-CN">Chinese (Simplified 简体)</option>
-          <option value="zh-HK">Chinese (Cantonese 粵語)</option>
-          <option value="zh-TW">Chinese (Traditional 繁體)</option>
-        </select>
+      <div class="top-bar" style="display: flex; gap: 1rem; align-items: center; flex-wrap: nowrap;">
+        <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1;">
+          <span style="font-size: 0.875rem; font-weight: 600; color: var(--text-muted); white-space: nowrap;">Language:</span>
+          <select id="lang-select" class="lang-select">
+            <option value="en-US">English (US)</option>
+            <option value="zh-CN">Chinese (Simplified 简体)</option>
+            <option value="zh-HK">Chinese (Cantonese 粵語)</option>
+            <option value="zh-TW">Chinese (Traditional 繁體)</option>
+          </select>
+        </div>
+        
+        <button id="dict-toggle-btn" class="btn-dict-toggle dict-on" title="Toggle Medical Dictionary">
+          <i data-lucide="zap" id="dict-toggle-icon" style="width: 16px; height: 16px;"></i> 
+          <span id="dict-toggle-text">Dict: ON</span>
+        </button>
       </div>
 
       <div id="unlock-container" class="templates-box">
@@ -174,6 +234,7 @@
       <div class="input-group">
         <div class="input-wrapper">
           <label class="input-label">Original Text</label>
+          <div id="autocomplete-bar" class="suggestions-bar hidden"></div>
           <textarea id="text-input" placeholder="Tap a mic, scan a document, or type your text here..."></textarea>
           <div id="recording-indicator" class="recording-indicator hidden"><div class="dot"></div><span id="recording-text">RECORDING</span></div>
         </div>
@@ -249,6 +310,52 @@
     let finalText = ''; let currentQrUrl = '';
     let mediaRecorder; let audioChunks = [];
 
+    // --- DICTIONARY & AUTOCORRECT LOGIC ---
+    let medicalVocabulary = [];
+    let fuse;
+    const fuseOptions = { includeScore: true, threshold: 0.35 }; // 0.35 gives good flexibility for misspellings
+
+    async function loadDictionary() {
+      try {
+        const response = await fetch(GAS_BACKEND_URL, {
+          method: "POST",
+          body: JSON.stringify({ action: "getDictionary" })
+        });
+        const data = await response.json();
+        if (data.success && data.terms) {
+          medicalVocabulary = data.terms;
+          fuse = new Fuse(medicalVocabulary, fuseOptions);
+          console.log("Medical dictionary loaded:", medicalVocabulary.length, "terms");
+        }
+      } catch (err) {
+        console.error("Failed to load medical dictionary.", err);
+      }
+    }
+    
+    // Load dictionary when the app starts
+    window.addEventListener('load', loadDictionary);
+
+    function applyMedicalAutocorrect(rawTranscript) {
+      if (!isAutocorrectEnabled) return rawTranscript;
+      if (!fuse || medicalVocabulary.length === 0) return rawTranscript;
+
+      let words = rawTranscript.split(" ");
+      let correctedWords = words.map(word => {
+        // Strip punctuation temporarily to check the core word
+        let cleanWord = word.replace(/[^\w\s]|_/g, "");
+        if (cleanWord.length < 4) return word; // Skip tiny words
+
+        const results = fuse.search(cleanWord);
+        if (results.length > 0 && results[0].score < 0.35) {
+          // Replace the misspelled word but try to keep attached punctuation
+          return word.replace(cleanWord, results[0].item); 
+        }
+        return word;
+      });
+
+      return correctedWords.join(" ");
+    }
+    // --------------------------------------
     // --- TEMPLATE UNLOCK LOGIC ---
     const unlockBtn = document.getElementById('unlock-btn');
     const accessCodeInput = document.getElementById('access-code');
@@ -329,7 +436,75 @@
       else { errorBox.classList.add('hidden'); }
     }
 
-    textArea.addEventListener('input', (e) => { finalText = e.target.value; });
+    const autocompleteBar = document.getElementById('autocomplete-bar');
+
+    textArea.addEventListener('input', (e) => { 
+      finalText = e.target.value; 
+
+      if (!isAutocorrectEnabled) {
+        autocompleteBar.classList.add('hidden');
+        return;
+      }
+      // 1. Get the current cursor position
+      const cursorPos = textArea.selectionStart;
+      const textBeforeCursor = finalText.slice(0, cursorPos);
+      
+      // 2. Extract the word currently being typed (letters only)
+      const match = textBeforeCursor.match(/([a-zA-Z]+)$/);
+
+      if (match && medicalVocabulary.length > 0) {
+        const currentPartialWord = match[1].toLowerCase();
+        
+        // 3. Only show suggestions if they have typed at least 3 letters
+        if (currentPartialWord.length >= 3) {
+          // Find words in your dictionary that START WITH what they typed
+          const suggestions = medicalVocabulary
+            .filter(word => word.toLowerCase().startsWith(currentPartialWord))
+            .slice(0, 5); // Limit to top 5 results so it fits on mobile
+
+          if (suggestions.length > 0) {
+            renderSuggestions(suggestions, match[1], cursorPos);
+            return;
+          }
+        }
+      }
+      
+      // If no match or less than 3 letters, hide the bar
+      autocompleteBar.classList.add('hidden');
+      autocompleteBar.innerHTML = '';
+    });
+
+    // Function to draw the buttons and handle tapping them
+    function renderSuggestions(suggestions, typedWord, cursorPos) {
+      autocompleteBar.innerHTML = '';
+      autocompleteBar.classList.remove('hidden');
+
+      suggestions.forEach(word => {
+        const btn = document.createElement('button');
+        btn.className = 'suggestion-chip';
+        btn.textContent = word;
+        
+        // What happens when they tap a suggestion:
+        btn.onclick = () => {
+          // Slice the text to remove the partial word and insert the full word
+          const textBeforeWord = finalText.slice(0, cursorPos - typedWord.length);
+          const textAfterCursor = finalText.slice(cursorPos);
+          
+          // Add a space after the autocompleted word
+          textArea.value = textBeforeWord + word + ' ' + textAfterCursor;
+          finalText = textArea.value;
+          
+          // Put the cursor exactly after the newly inserted word and space
+          const newCursorPos = textBeforeWord.length + word.length + 1;
+          textArea.setSelectionRange(newCursorPos, newCursorPos);
+          textArea.focus();
+          
+          // Hide the bar
+          autocompleteBar.classList.add('hidden');
+        };
+        autocompleteBar.appendChild(btn);
+      });
+    }
 
     // --- NEW LANGUAGE RULE ---
     function enforceLanguageRules() {
@@ -411,14 +586,22 @@
         dailyMicBtn.classList.add('is-recording'); iconDailyMic.classList.add('hidden'); iconDailyStop.classList.remove('hidden');
         recordingIndicator.classList.remove('hidden'); showError('');
       };
+
       recognition.onresult = (e) => {
         let finalChunk = ''; let interimChunk = '';
         for (let i = e.resultIndex; i < e.results.length; ++i) {
-          if (e.results[i].isFinal) finalChunk += e.results[i][0].transcript + ' '; else interimChunk += e.results[i][0].transcript;
+          if (e.results[i].isFinal) {
+            // Apply autocorrect to the final confirmed phrase
+            let correctedFinal = applyMedicalAutocorrect(e.results[i][0].transcript);
+            finalChunk += correctedFinal + ' '; 
+          } else {
+            interimChunk += e.results[i][0].transcript;
+          }
         }
         if (finalChunk) finalText += (finalText && !finalText.endsWith(' ') ? ' ' : '') + finalChunk;
         textArea.value = finalText + interimChunk;
       };
+      
       recognition.onerror = (e) => { showError("Mic error: " + e.error); stopDailyMic(); };
       recognition.onend = () => stopDailyMic();
     } else { dailyMicBtn.style.display = 'none'; }
@@ -485,14 +668,11 @@
         });
         const data = await response.json();
         if (data.success) {
-          finalText = finalText + (finalText ? ' ' : '') + data.text; textArea.value = finalText;
+          // Apply autocorrect to the Google Cloud transcript
+          let correctedText = applyMedicalAutocorrect(data.text);
+          finalText = finalText + (finalText ? ' ' : '') + correctedText; 
+          textArea.value = finalText;
         } else { showError("Backend error: " + data.error); }
-      } catch (error) { showError("Failed to connect to backend server."); } 
-      finally {
-        googleMicBtn.innerHTML = '<span id="icon-google-mic"><i data-lucide="stethoscope"></i></span><span id="icon-google-stop" class="hidden"><i data-lucide="square"></i></span><span class="mic-ping"></span>';
-        unlockControls(); medicalBanner.classList.add('hidden'); lucide.createIcons();
-      }
-    }
 
     googleMicBtn.addEventListener('click', () => {
       if (isGoogleRecording) stopGoogleMic(); else startGoogleMic();
@@ -698,7 +878,28 @@
       } catch (err) { showError("Failed to prepare image for sharing."); }
     });
 
-   
+   // --- DICTIONARY TOGGLE LOGIC ---
+    let isAutocorrectEnabled = true; // ON by default
+    const dictToggleBtn = document.getElementById('dict-toggle-btn');
+    const dictToggleText = document.getElementById('dict-toggle-text');
+    const dictToggleIcon = document.getElementById('dict-toggle-icon');
+
+    dictToggleBtn.addEventListener('click', () => {
+      isAutocorrectEnabled = !isAutocorrectEnabled; // Flip the boolean
+      
+      if (isAutocorrectEnabled) {
+        dictToggleBtn.className = 'btn-dict-toggle dict-on';
+        dictToggleText.textContent = 'Dict: ON';
+        dictToggleIcon.setAttribute('data-lucide', 'zap');
+      } else {
+        dictToggleBtn.className = 'btn-dict-toggle dict-off';
+        dictToggleText.textContent = 'Dict: OFF';
+        dictToggleIcon.setAttribute('data-lucide', 'zap-off');
+        // Instantly hide the typing autocomplete bar if they turn it off while typing
+        document.getElementById('autocomplete-bar').classList.add('hidden'); 
+      }
+      lucide.createIcons(); // Refresh the icon
+    });
   </script>
 </body>
 </html>

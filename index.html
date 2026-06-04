@@ -117,30 +117,17 @@
     /* --- AUTOCOMPLETE SUGGESTIONS BAR --- */
     .suggestions-bar {
       display: flex;
-      gap: 0.5rem;
-      overflow-x: auto;
-      padding-bottom: 0.5rem;
-      margin-bottom: 0.5rem;
-      min-height: 44px; /* ADD THIS: reserves the space */
-      scrollbar-width: none; 
-      transition: opacity 0.2s ease-in-out; /* ADD THIS: smooth fade */
-      margin-top: 0.75rem;
-    }
-   /* --- AUTOCOMPLETE SUGGESTIONS BAR --- */
-    .suggestions-bar {
-      display: flex;
-      gap: 0.25rem; /* Reduced the gap between chips */
+      gap: 0; /* Removed gap to link words seamlessly */
       overflow-x: auto;
       scrollbar-width: none; 
       transition: opacity 0.2s ease-in-out; 
       
-      /* New floating properties */
       position: absolute;
-      bottom: 0.5rem; /* Floats exactly at the bottom of the text input */
+      bottom: 0.5rem;
       left: 0.5rem;
       right: 0.5rem;
-      z-index: 10; /* Forces it to sit above the textarea layer */
-      padding: 0.25rem; /* Keeps the drop-shadow from getting clipped */
+      z-index: 10;
+      padding: 0.25rem; 
     }
     .suggestions-bar::-webkit-scrollbar {
       display: none; 
@@ -150,20 +137,49 @@
       pointer-events: none;
     }
     .suggestion-chip {
-      background-color: rgba(243, 232, 255, 0.95); /* Slight transparency */
+      background-color: rgba(243, 232, 255, 0.95);
       color: #7e22ce;
       border: 1px solid #d8b4fe;
-      padding: 0.25rem 0.6rem; /* Reduced padding to match the smaller text */
-      border-radius: 999px;
-      font-size: 0.75rem; /* Reduced font size */
+      padding: 0.35rem 0.75rem;
+      font-size: 0.75rem;
       font-weight: 600;
       white-space: nowrap;
       cursor: pointer;
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); /* Added a stronger shadow to emphasize the "floating" effect */
-      backdrop-filter: blur(2px); /* Blurs the text slightly underneath the chips */
+      backdrop-filter: blur(2px);
+      transition: all 0.15s ease;
+      
+      /* Connected Group styling */
+      border-radius: 0; /* Square corners for middle items */
+      margin-left: -1px; /* Overlap borders to prevent double-thickness */
+      position: relative; /* Required to bring hover state above siblings */
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Subtle overall shadow */
     }
+    
+    /* Keep the first item fully rounded on the left */
+    .suggestion-chip:first-child {
+      border-top-left-radius: 999px;
+      border-bottom-left-radius: 999px;
+      margin-left: 0; /* Remove negative margin for the very first item */
+    }
+
+    /* Keep the last item fully rounded on the right */
+    .suggestion-chip:last-child {
+      border-top-right-radius: 999px;
+      border-bottom-right-radius: 999px;
+    }
+
+    /* Hover effect */
     .suggestion-chip:hover {
       background-color: #e9d5ff;
+      z-index: 1; /* Pop the hovered chip's border to the top */
+    }
+
+    /* Click / Active effect */
+    .suggestion-chip:active {
+      background-color: #d8b4fe;
+      color: #581c87;
+      z-index: 2; /* Keep active state strictly on top */
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.15); /* Pressed-in visual */
     }
 
     /* --- AUTOCORRECT TOGGLE BUTTON --- */

@@ -188,8 +188,8 @@
         </div>
         
         <button id="dict-toggle-btn" class="btn-dict-toggle dict-on" title="Toggle Medical Dictionary">
-          <i data-lucide="zap" id="dict-toggle-icon" style="width: 16px; height: 16px;"></i> 
-          <span id="dict-toggle-text">Dict: ON</span>
+          <i data-lucide="zap" style="width: 16px; height: 16px;"></i> 
+          <span>Dict: ON</span>
         </button>
       </div>
 
@@ -303,7 +303,6 @@
     const cameraBanner = document.getElementById('camera-banner');
     const errorBox = document.getElementById('error-box'); const errorText = document.getElementById('error-text');
 
-    // Make sure your GAS URL matches your latest deployment
     const GAS_BACKEND_URL = "https://script.google.com/macros/s/AKfycbx92-VcS0HEe8I6nC8F0QQziBfgBjuFogpu8gfxj-LoNSXQsEsJhGxZSNSpkTFtRVU8/exec";
     
     let isDailyRecording = false; let isGoogleRecording = false;
@@ -313,7 +312,7 @@
     // --- DICTIONARY & AUTOCORRECT LOGIC ---
     let medicalVocabulary = [];
     let fuse;
-    const fuseOptions = { includeScore: true, threshold: 0.35 }; // 0.35 gives good flexibility for misspellings
+    const fuseOptions = { includeScore: true, threshold: 0.35 }; 
 
     async function loadDictionary() {
       try {
@@ -332,7 +331,6 @@
       }
     }
     
-    // Load dictionary when the app starts
     window.addEventListener('load', loadDictionary);
 
     function applyMedicalAutocorrect(rawTranscript) {
@@ -341,13 +339,11 @@
 
       let words = rawTranscript.split(" ");
       let correctedWords = words.map(word => {
-        // Strip punctuation temporarily to check the core word
         let cleanWord = word.replace(/[^\w\s]|_/g, "");
-        if (cleanWord.length < 4) return word; // Skip tiny words
+        if (cleanWord.length < 4) return word; 
 
         const results = fuse.search(cleanWord);
         if (results.length > 0 && results[0].score < 0.35) {
-          // Replace the misspelled word but try to keep attached punctuation
           return word.replace(cleanWord, results[0].item); 
         }
         return word;
@@ -355,7 +351,7 @@
 
       return correctedWords.join(" ");
     }
-    // --------------------------------------
+    
     // --- TEMPLATE UNLOCK LOGIC ---
     const unlockBtn = document.getElementById('unlock-btn');
     const accessCodeInput = document.getElementById('access-code');
@@ -377,7 +373,6 @@
         const data = await response.json();
         
         if (data.success && data.templates && data.templates.length > 0) {
-          // Success! Hide unlock box, show templates dropdown
           document.getElementById('unlock-container').classList.add('hidden');
           document.getElementById('templates-container').classList.remove('hidden');
           
@@ -399,35 +394,29 @@
       }
     });
 
-    // Enter key submits access code
     accessCodeInput.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') unlockBtn.click();
     });
 
-    // Insert template into main dictation box
-    // Insert template into main dictation box and apply laterality
     templateSelect.addEventListener('change', (e) => {
       if (e.target.value) {
         let selectedText = e.target.value;
         const laterality = document.getElementById('laterality-select').value;
 
-        // Apply laterality logic if a side is chosen
         if (laterality !== 'N/A') {
           if (selectedText.includes('PPP for ')) {
-            // Add right after the first occurrence of "PPP for "
             selectedText = selectedText.replace('PPP for ', 'PPP for ' + laterality + ' ');
           } else {
-            // Append as (Laterality) to the end of the first line
             let lines = selectedText.split('\n');
             lines[0] = lines[0] + ' (' + laterality + ')';
             selectedText = lines.join('\n');
           }
         }
 
-        finalText = selectedText; // Overwrites the existing text entirely
+        finalText = selectedText; 
         textArea.value = finalText;
-        translatedArea.value = '';  // Clears out any old translation too
-        e.target.value = "";        // Reset select dropdown
+        translatedArea.value = '';  
+        e.target.value = "";        
       }
     });
 
@@ -445,22 +434,19 @@
         autocompleteBar.classList.add('hidden');
         return;
       }
-      // 1. Get the current cursor position
+      
       const cursorPos = textArea.selectionStart;
       const textBeforeCursor = finalText.slice(0, cursorPos);
       
-      // 2. Extract the word currently being typed (letters only)
       const match = textBeforeCursor.match(/([a-zA-Z]+)$/);
 
       if (match && medicalVocabulary.length > 0) {
         const currentPartialWord = match[1].toLowerCase();
         
-        // 3. Only show suggestions if they have typed at least 3 letters
         if (currentPartialWord.length >= 3) {
-          // Find words in your dictionary that START WITH what they typed
           const suggestions = medicalVocabulary
             .filter(word => word.toLowerCase().startsWith(currentPartialWord))
-            .slice(0, 5); // Limit to top 5 results so it fits on mobile
+            .slice(0, 5); 
 
           if (suggestions.length > 0) {
             renderSuggestions(suggestions, match[1], cursorPos);
@@ -469,12 +455,10 @@
         }
       }
       
-      // If no match or less than 3 letters, hide the bar
       autocompleteBar.classList.add('hidden');
       autocompleteBar.innerHTML = '';
     });
 
-    // Function to draw the buttons and handle tapping them
     function renderSuggestions(suggestions, typedWord, cursorPos) {
       autocompleteBar.innerHTML = '';
       autocompleteBar.classList.remove('hidden');
@@ -484,29 +468,23 @@
         btn.className = 'suggestion-chip';
         btn.textContent = word;
         
-        // What happens when they tap a suggestion:
         btn.onclick = () => {
-          // Slice the text to remove the partial word and insert the full word
           const textBeforeWord = finalText.slice(0, cursorPos - typedWord.length);
           const textAfterCursor = finalText.slice(cursorPos);
           
-          // Add a space after the autocompleted word
           textArea.value = textBeforeWord + word + ' ' + textAfterCursor;
           finalText = textArea.value;
           
-          // Put the cursor exactly after the newly inserted word and space
           const newCursorPos = textBeforeWord.length + word.length + 1;
           textArea.setSelectionRange(newCursorPos, newCursorPos);
           textArea.focus();
           
-          // Hide the bar
           autocompleteBar.classList.add('hidden');
         };
         autocompleteBar.appendChild(btn);
       });
     }
 
-    // --- NEW LANGUAGE RULE ---
     function enforceLanguageRules() {
       if (langSelect.value !== 'en-US') {
         googleMicBtn.disabled = true;
@@ -516,10 +494,8 @@
         googleMicBtn.title = "Google Medical Cloud";
       }
     }
-    // Listen for language changes from the user
     langSelect.addEventListener('change', enforceLanguageRules);
     window.addEventListener('load', enforceLanguageRules);
-    // -------------------------
 
     function lockControls(exclude) {
       if(exclude !== 'daily') dailyMicBtn.disabled = true;
@@ -530,7 +506,7 @@
     function unlockControls() {
       dailyMicBtn.disabled = false; 
       cameraBtn.disabled = false;
-      enforceLanguageRules(); // Ensures Google Mic obeys the language rule after unlocking
+      enforceLanguageRules(); 
     }
 
     cameraBtn.addEventListener('click', () => {
@@ -591,7 +567,6 @@
         let finalChunk = ''; let interimChunk = '';
         for (let i = e.resultIndex; i < e.results.length; ++i) {
           if (e.results[i].isFinal) {
-            // Apply autocorrect to the final confirmed phrase
             let correctedFinal = applyMedicalAutocorrect(e.results[i][0].transcript);
             finalChunk += correctedFinal + ' '; 
           } else {
@@ -611,6 +586,7 @@
       dailyMicBtn.classList.remove('is-recording'); iconDailyMic.classList.remove('hidden'); iconDailyStop.classList.add('hidden');
       recordingIndicator.classList.add('hidden');
     }
+    
     dailyMicBtn.addEventListener('click', () => {
       if (isDailyRecording) recognition.stop();
       else { recognition.lang = langSelect.value; try { recognition.start(); } catch (e) {} }
@@ -668,7 +644,6 @@
         });
         const data = await response.json();
         if (data.success) {
-          // Apply autocorrect to the Google Cloud transcript
           let correctedText = applyMedicalAutocorrect(data.text);
           finalText = finalText + (finalText ? ' ' : '') + correctedText; 
           textArea.value = finalText;
@@ -677,8 +652,17 @@
         }
       } catch (err) {
         showError("Network or server error while processing audio.");
+      } finally {
+        unlockControls();
+        googleMicBtn.disabled = false;
+        googleMicBtn.innerHTML = '<span id="icon-google-mic"><i data-lucide="stethoscope"></i></span><span id="icon-google-stop" class="hidden"><i data-lucide="square"></i></span><span class="mic-ping"></span>';
+        lucide.createIcons();
+        medicalBanner.classList.add('hidden');
+        
+        iconGoogleMic = document.getElementById('icon-google-mic');
+        iconGoogleStop = document.getElementById('icon-google-stop');
       }
-    } // <--- THESE BRACKETS WERE MISSING
+    } 
 
     googleMicBtn.addEventListener('click', () => {
       if (isGoogleRecording) stopGoogleMic(); else startGoogleMic();
@@ -727,8 +711,7 @@
       showError(''); document.getElementById('generate-btn').disabled = true;
       document.getElementById('generate-btn').innerHTML = '<i data-lucide="loader" class="animate-spin"></i> Generating...'; lucide.createIcons();
 
-    try {
-        // Back to the simple URL method with margin=4 and ecLevel=L
+      try {
         currentQrUrl = 'https://quickchart.io/qr?size=900&margin=4&ecLevel=L&text=' + encodeURIComponent(textToProcess.replace(/\r?\n/g, '\r\n'));
         document.getElementById('qr-image').src = currentQrUrl;
         
@@ -741,7 +724,7 @@
         document.getElementById('generate-btn').innerHTML = '<i data-lucide="qr-code"></i> Create QR'; 
         lucide.createIcons(); 
       }
-    })
+    });
 
     document.getElementById('clear-btn').addEventListener('click', () => {
       finalText = ''; textArea.value = ''; translatedArea.value = ''; currentQrUrl = ''; document.getElementById('qr-image').src = '';
@@ -750,19 +733,17 @@
       if (isGoogleRecording) stopGoogleMic();
     });
 
-   function getCombinedCanvas() {
+    function getCombinedCanvas() {
       const canvas = document.createElement('canvas'); 
       const ctx = canvas.getContext('2d');
       
       const scale = 3; 
-      const qrSize = 900;     // 300 * 3
-      const padding = 150;    // 50 * 3
+      const qrSize = 900;     
+      const padding = 150;    
       
-      // MAIN TEXT SETTINGS
-      const fontSize = 52;    
+      const fontSize = 52;  
       const lineHeight = 80;  
       
-      // FOOTNOTE SETTINGS
       const footnoteText = "Use the scanner from your local computer to scan it to reduce your typing.";
       const footnoteFontSize = 45; 
       const footnoteLineHeight = 65;
@@ -770,7 +751,6 @@
       const textToDraw = translatedArea.value.trim();
       canvas.width = qrSize + (padding * 2); 
       
-      // 1. Process Main Text
       ctx.font = fontSize + 'px sans-serif'; 
       const paragraphs = textToDraw.split('\n');
       let lines = [];
@@ -797,7 +777,6 @@
         lines.push(currentLine.trim());
       }
       
-      // 2. Process Footnote Text
       ctx.font = 'italic ' + footnoteFontSize + 'px sans-serif';
       let footnoteWords = footnoteText.split(' ');
       let footnoteLines = [];
@@ -814,18 +793,14 @@
       }
       footnoteLines.push(currentFLine.trim());
       
-      // 3. Calculate new Canvas Height (including footnote space)
       const gapBeforeFootnote = 80;
       canvas.height = qrSize + (padding * 2) + (lines.length * lineHeight) + gapBeforeFootnote + (footnoteLines.length * footnoteLineHeight) + padding; 
       
-      // Draw Background
       ctx.fillStyle = '#ffffff'; 
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       
-      // Draw QR Code
       ctx.drawImage(document.getElementById('qr-image'), padding, padding, qrSize, qrSize);
       
-      // 4. Draw Main Text
       ctx.fillStyle = '#111827'; 
       ctx.textAlign = 'left'; 
       ctx.textBaseline = 'top';
@@ -837,10 +812,9 @@
         yPosition += lineHeight; 
       }
       
-      // 5. Draw Footnote
-      yPosition += gapBeforeFootnote; // Add a nice gap before the footnote
-      ctx.fillStyle = '#800020'; // Wine red
-      ctx.textAlign = 'center';  // Center the footnote under the text
+      yPosition += gapBeforeFootnote; 
+      ctx.fillStyle = '#800020'; 
+      ctx.textAlign = 'center';  
       ctx.font = 'italic ' + footnoteFontSize + 'px sans-serif';
       
       for(let i = 0; i < footnoteLines.length; i++) { 
@@ -855,7 +829,6 @@
       if (!currentQrUrl || !document.getElementById('qr-image').complete) return;
       try {
         const link = document.createElement('a'); 
-        // Export as High-Quality JPEG
         link.href = getCombinedCanvas().toDataURL('image/jpeg', 0.95);
         link.download = 'voice-qr-combined.jpg'; 
         document.body.appendChild(link); 
@@ -867,7 +840,6 @@
     document.getElementById('share-btn').addEventListener('click', async () => {
       if (!currentQrUrl || !document.getElementById('qr-image').complete) { showError("Generate a QR code first."); return; }
       try {
-        // Export as High-Quality JPEG Blob
         getCombinedCanvas().toBlob(async (blob) => {
           const file = new File([blob], 'voice-qr-combined.jpg', { type: 'image/jpeg' });
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -887,24 +859,20 @@
    // --- DICTIONARY TOGGLE LOGIC ---
     let isAutocorrectEnabled = true; // ON by default
     const dictToggleBtn = document.getElementById('dict-toggle-btn');
-    const dictToggleText = document.getElementById('dict-toggle-text');
-    const dictToggleIcon = document.getElementById('dict-toggle-icon');
 
     dictToggleBtn.addEventListener('click', () => {
-      isAutocorrectEnabled = !isAutocorrectEnabled; // Flip the boolean
+      isAutocorrectEnabled = !isAutocorrectEnabled; 
       
       if (isAutocorrectEnabled) {
         dictToggleBtn.className = 'btn-dict-toggle dict-on';
-        dictToggleText.textContent = 'Dict: ON';
-        dictToggleIcon.setAttribute('data-lucide', 'zap');
+        dictToggleBtn.innerHTML = '<i data-lucide="zap" style="width: 16px; height: 16px;"></i> <span>Dict: ON</span>';
       } else {
         dictToggleBtn.className = 'btn-dict-toggle dict-off';
-        dictToggleText.textContent = 'Dict: OFF';
-        dictToggleIcon.setAttribute('data-lucide', 'zap-off');
-        // Instantly hide the typing autocomplete bar if they turn it off while typing
+        dictToggleBtn.innerHTML = '<i data-lucide="zap-off" style="width: 16px; height: 16px;"></i> <span>Dict: OFF</span>';
         document.getElementById('autocomplete-bar').classList.add('hidden'); 
       }
-      lucide.createIcons(); // Refresh the icon
+      
+      lucide.createIcons(); // Force refresh the SVG icons
     });
   </script>
 </body>

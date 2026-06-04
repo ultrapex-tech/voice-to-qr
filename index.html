@@ -672,7 +672,13 @@
           let correctedText = applyMedicalAutocorrect(data.text);
           finalText = finalText + (finalText ? ' ' : '') + correctedText; 
           textArea.value = finalText;
-        } else { showError("Backend error: " + data.error); }
+        } else { 
+          showError("Backend error: " + data.error); 
+        }
+      } catch (err) {
+        showError("Network or server error while processing audio.");
+      }
+    } // <--- THESE BRACKETS WERE MISSING
 
     googleMicBtn.addEventListener('click', () => {
       if (isGoogleRecording) stopGoogleMic(); else startGoogleMic();

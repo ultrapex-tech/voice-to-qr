@@ -735,6 +735,10 @@
           },
           body: JSON.stringify({ action: "getDictionary" })
         });
+        
+        const rawResponse = await response.text();
+        console.log("RAW SERVER RESPONSE:", rawResponse);
+        
         const data = await response.json();
         if (data.success) {
           let correctedText = applyMedicalAutocorrect(data.text);

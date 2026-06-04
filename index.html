@@ -321,10 +321,23 @@
           body: JSON.stringify({ action: "getDictionary" })
         });
         const data = await response.json();
-        if (data.success && data.terms) {
+        
+        // Handles the new combined JSON structure
+        if (data.success && data.dictionary) {
+          const acronyms = data.dictionary.acronyms || [];
+          const words = data.dictionary.words || [];
+          
+          // Merge both lists for the autocorrect library to search
+          medicalVocabulary = [...acronyms, ...words];
+          
+          fuse = new Fuse(medicalVocabulary, fuseOptions);
+          console.log(`Medical dictionary loaded: ${acronyms.length} acronyms, ${words.length} words. Total: ${medicalVocabulary.length}`);
+        } 
+        // Fallback for the old format (just in case)
+        else if (data.success && data.terms) {
           medicalVocabulary = data.terms;
           fuse = new Fuse(medicalVocabulary, fuseOptions);
-          console.log("Medical dictionary loaded:", medicalVocabulary.length, "terms");
+          console.log("Legacy medical dictionary loaded:", medicalVocabulary.length, "terms");
         }
       } catch (err) {
         console.error("Failed to load medical dictionary.", err);
@@ -340,7 +353,9 @@
       let words = rawTranscript.split(" ");
       let correctedWords = words.map(word => {
         let cleanWord = word.replace(/[^\w\s]|_/g, "");
-        if (cleanWord.length < 4) return word; 
+        
+        // Changed from 4 to 3 to capture acronyms like AVM, DBS, AAV
+        if (cleanWord.length < 3) return word; 
 
         const results = fuse.search(cleanWord);
         if (results.length > 0 && results[0].score < 0.35) {

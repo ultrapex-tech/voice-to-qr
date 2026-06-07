@@ -736,9 +736,6 @@
          body: JSON.stringify({action: "speech", audio: base64Audio, language: langSelect.value})
         });
         
-        const rawResponse = await response.text();
-        console.log("RAW SERVER RESPONSE:", rawResponse);
-        
         const data = await response.json();
         if (data.success) {
           let correctedText = applyMedicalAutocorrect(data.text);

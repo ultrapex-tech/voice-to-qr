@@ -452,7 +452,7 @@
           headers: {
             "Content-Type": "text/plain;charset=utf-8", // CRITICAL: Bypasses the CORS preflight check
           },
-          body: JSON.stringify({ action: "getDictionary" })
+          body: JSON.stringify({ action: "getTemplates" })
         });
         const data = await response.json();
         

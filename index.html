@@ -452,7 +452,7 @@
           headers: {
             "Content-Type": "text/plain;charset=utf-8", // CRITICAL: Bypasses the CORS preflight check
           },
-          body: JSON.stringify({ action: "getTemplates" })
+          body: JSON.stringify({ action: "getTemplates", code: code })
         });
         const data = await response.json();
         
@@ -618,7 +618,7 @@
             headers: {
               "Content-Type": "text/plain;charset=utf-8", // CRITICAL: Bypasses the CORS preflight check
             },
-            body: JSON.stringify({ action: "vision" })
+            body: JSON.stringify({ action: "vision", image: base64Image })
           });
           
           const data = await response.json();
@@ -733,7 +733,7 @@
           headers: {
             "Content-Type": "text/plain;charset=utf-8", // CRITICAL: Bypasses the CORS preflight check
           },
-          body: JSON.stringify({ action: "speech" })
+         body: JSON.stringify({action: "speech", audio: base64Audio, language: langSelect.value})
         });
         
         const rawResponse = await response.text();

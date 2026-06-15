@@ -30,7 +30,7 @@
     .title { font-size: 2rem; font-weight: 800; letter-spacing: -0.025em; margin-bottom: 0.5rem; background: linear-gradient(to right, #4f46e5, #9333ea); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: flex; align-items: center; gap: 0.5rem; }
     .subtitle { color: var(--text-muted); line-height: 1.5; }
     
-    .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; }
+    .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem; }
     .lang-select { padding: 0.5rem 1rem; border-radius: 0.75rem; border: 1px solid var(--border-color); background-color: white; color: var(--text-main); font-weight: 500; font-size: 0.875rem; cursor: pointer; outline: none; width: 100%;}
     .lang-select:focus { border-color: var(--primary); }
     
@@ -42,7 +42,7 @@
     .hidden { display: none !important; }
     
     .input-group { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; }
-    .input-wrapper { position: relative; display: flex; flex-direction: column; width: 100%; }
+    .input-wrapper { position: relative; display: flex; flex-direction: column; width: 100%; transition: all 0.3s ease;}
     .input-label { font-size: 0.875rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; }
     
     textarea { width: 100%; min-height: 150px; padding: 1rem; border-radius: 1rem; border: 1px solid var(--border-color); font-size: 1rem; line-height: 1.5; resize: vertical; font-family: inherit; transition: all 0.2s; }
@@ -71,6 +71,7 @@
         "generate camera clear";
       gap: 0.75rem; 
       width: 100%; 
+      transition: all 0.3s ease;
     }
     
     .btn-translate { grid-area: translate; height: 60px; background-color: var(--secondary); color: white; border-radius: 1rem; font-size: 1rem; font-weight: 700; gap: 0.5rem; }
@@ -117,7 +118,7 @@
     /* --- AUTOCOMPLETE SUGGESTIONS BAR --- */
     .suggestions-bar {
       display: flex;
-      gap: 0; /* Removed gap to link words seamlessly */
+      gap: 0;
       overflow-x: auto;
       scrollbar-width: none; 
       transition: opacity 0.2s ease-in-out; 
@@ -129,81 +130,23 @@
       z-index: 10;
       padding: 0.25rem; 
     }
-    .suggestions-bar::-webkit-scrollbar {
-      display: none; 
-    }
-    .hidden-invisible {
-      opacity: 0;
-      pointer-events: none;
-    }
+    .suggestions-bar::-webkit-scrollbar { display: none; }
+    .hidden-invisible { opacity: 0; pointer-events: none; }
     .suggestion-chip {
       background-color: rgba(243, 232, 255, 0.95);
-      color: #7e22ce;
-      border: 1px solid #d8b4fe;
-      padding: 0.35rem 0.75rem;
-      font-size: 0.75rem;
-      font-weight: 600;
-      white-space: nowrap;
-      cursor: pointer;
-      backdrop-filter: blur(2px);
-      transition: all 0.15s ease;
-      
-      /* Connected Group styling */
-      border-radius: 0; /* Square corners for middle items */
-      margin-left: -1px; /* Overlap borders to prevent double-thickness */
-      position: relative; /* Required to bring hover state above siblings */
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Subtle overall shadow */
+      color: #7e22ce; border: 1px solid #d8b4fe;
+      padding: 0.35rem 0.75rem; font-size: 0.75rem; font-weight: 600; white-space: nowrap; cursor: pointer; backdrop-filter: blur(2px); transition: all 0.15s ease;
+      border-radius: 0; margin-left: -1px; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
     }
-    
-    /* Keep the first item fully rounded on the left */
-    .suggestion-chip:first-child {
-      border-top-left-radius: 999px;
-      border-bottom-left-radius: 999px;
-      margin-left: 0; /* Remove negative margin for the very first item */
-    }
-
-    /* Keep the last item fully rounded on the right */
-    .suggestion-chip:last-child {
-      border-top-right-radius: 999px;
-      border-bottom-right-radius: 999px;
-    }
-
-    /* Hover effect */
-    .suggestion-chip:hover {
-      background-color: #e9d5ff;
-      z-index: 1; /* Pop the hovered chip's border to the top */
-    }
-
-    /* Click / Active effect */
-    .suggestion-chip:active {
-      background-color: #d8b4fe;
-      color: #581c87;
-      z-index: 2; /* Keep active state strictly on top */
-      box-shadow: inset 0 2px 4px rgba(0,0,0,0.15); /* Pressed-in visual */
-    }
+    .suggestion-chip:first-child { border-top-left-radius: 999px; border-bottom-left-radius: 999px; margin-left: 0; }
+    .suggestion-chip:last-child { border-top-right-radius: 999px; border-bottom-right-radius: 999px; }
+    .suggestion-chip:hover { background-color: #e9d5ff; z-index: 1; }
+    .suggestion-chip:active { background-color: #d8b4fe; color: #581c87; z-index: 2; box-shadow: inset 0 2px 4px rgba(0,0,0,0.15); }
 
     /* --- AUTOCORRECT TOGGLE BUTTON --- */
-    .btn-dict-toggle {
-      padding: 0.5rem 1rem;
-      border-radius: 0.75rem;
-      font-weight: 600;
-      font-size: 0.875rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .dict-on {
-      background-color: #dcfce7;
-      color: #15803d;
-      border: 1px solid #bbf7d0;
-    }
-    .dict-off {
-      background-color: #f3f4f6;
-      color: #6b7280;
-      border: 1px solid #d1d5db;
-    }
+    .btn-dict-toggle { padding: 0.5rem 1rem; border-radius: 0.75rem; font-weight: 600; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; transition: all 0.2s; }
+    .dict-on { background-color: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .dict-off { background-color: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db; }
     
   </style>
 </head>
@@ -216,8 +159,16 @@
         <p class="subtitle">Speak or scan a document, translate it, and generate a QR code.</p>
       </div>
 
-      <div class="top-bar" style="display: flex; gap: 1rem; align-items: center; flex-wrap: nowrap;">
-        <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1;">
+      <div class="top-bar">
+        <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 200px;">
+          <span style="font-size: 0.875rem; font-weight: 600; color: var(--text-muted); white-space: nowrap;">Mode:</span>
+          <select id="mode-select" class="lang-select">
+            <option value="translation">Translation Mode</option>
+            <option value="notes">Note Taking Mode</option>
+          </select>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 200px;">
           <span style="font-size: 0.875rem; font-weight: 600; color: var(--text-muted); white-space: nowrap;">Language:</span>
           <select id="lang-select" class="lang-select">
             <option value="en-US">English (US)</option>
@@ -279,13 +230,13 @@
           <div id="autocomplete-bar" class="suggestions-bar hidden-invisible"></div>
         </div>
 
-        <div class="input-wrapper">
+        <div class="input-wrapper" id="translated-wrapper">
           <label class="input-label">Translated Text (English)</label>
           <textarea id="translated-input" placeholder="Translation will appear here..."></textarea>
         </div>
       </div>
 
-      <div class="controls">
+      <div class="controls" id="action-controls">
         <button id="translate-btn" class="btn-translate" title="Translate Original to English"><i data-lucide="languages"></i> To English</button>
         
         <button id="daily-mic-btn" class="btn-mic-daily" title="Daily Mic (Live Typing)">
@@ -296,7 +247,7 @@
           <span id="icon-google-mic"><i data-lucide="stethoscope"></i></span><span id="icon-google-stop" class="hidden"><i data-lucide="square"></i></span><span class="mic-ping"></span>
         </button>
 
-        <button id="generate-btn" class="btn-generate" title="Generate QR from Translated Text"><i data-lucide="qr-code"></i> Create QR</button>
+        <button id="generate-btn" class="btn-generate" title="Generate QR"><i data-lucide="qr-code"></i> Create QR</button>
 
         <button id="camera-btn" class="btn-camera" title="Take or Upload Photo">
           <i data-lucide="camera"></i>
@@ -327,8 +278,12 @@
 
     const textArea = document.getElementById('text-input');
     const translatedArea = document.getElementById('translated-input');
+    const translatedWrapper = document.getElementById('translated-wrapper');
     const langSelect = document.getElementById('lang-select');
+    const modeSelect = document.getElementById('mode-select');
     const templateSelect = document.getElementById('template-select');
+    const translateBtn = document.getElementById('translate-btn');
+    const actionControls = document.getElementById('action-controls');
     
     const dailyMicBtn = document.getElementById('daily-mic-btn');
     const googleMicBtn = document.getElementById('google-mic-btn');
@@ -349,14 +304,35 @@
     let finalText = ''; let currentQrUrl = '';
     let mediaRecorder; let audioChunks = [];
 
+    // --- MODE TOGGLE LOGIC ---
+    modeSelect.addEventListener('change', (e) => {
+      if (e.target.value === 'notes') {
+        translatedWrapper.classList.add('hidden');
+        translateBtn.classList.add('hidden');
+        // Let the generate button take over the top spot in the grid
+        actionControls.style.gridTemplateAreas = `
+          "generate daily medical"
+          "generate camera clear"
+        `;
+      } else {
+        translatedWrapper.classList.remove('hidden');
+        translateBtn.classList.remove('hidden');
+        // Revert to original grid layout
+        actionControls.style.gridTemplateAreas = `
+          "translate daily medical"
+          "generate camera clear"
+        `;
+      }
+    });
+
     // --- DICTIONARY & AUTOCORRECT LOGIC ---
     let medicalVocabulary = [];
     let fuse;
     const fuseOptions = { 
       includeScore: true, 
-      threshold: 0.45,       // Increased from 0.35 to catch worse misspellings
-      distance: 100,         // Allows typos to be spread further across the word
-      ignoreLocation: true   // Focuses purely on character matching, regardless of order
+      threshold: 0.45, 
+      distance: 100,         
+      ignoreLocation: true   
     };
 
     async function loadDictionary() {
@@ -365,26 +341,21 @@
       try {
         const response = await fetch(GAS_BACKEND_URL, {
           method: "POST",
-          redirect: "follow", // CRITICAL: Tells the browser to follow Google's 302 redirect
+          redirect: "follow", 
           headers: {
-            "Content-Type": "text/plain;charset=utf-8", // CRITICAL: Bypasses the CORS preflight check
+            "Content-Type": "text/plain;charset=utf-8", 
           },
           body: JSON.stringify({ action: "getDictionary" })
         });
         const data = await response.json();
         
-        // Handles the new combined JSON structure
         if (data.success && data.dictionary) {
           const acronyms = data.dictionary.acronyms || [];
           const words = data.dictionary.words || [];
-          
-          // Merge both lists for the autocorrect library to search
           medicalVocabulary = [...acronyms, ...words];
-          
           fuse = new Fuse(medicalVocabulary, fuseOptions);
           console.log(`Medical dictionary loaded: ${acronyms.length} acronyms, ${words.length} words. Total: ${medicalVocabulary.length}`);
         } 
-        // Fallback for the old format (just in case)
         else if (data.success && data.terms) {
           medicalVocabulary = data.terms;
           fuse = new Fuse(medicalVocabulary, fuseOptions);
@@ -392,9 +363,8 @@
         }
       } catch (err) {
         console.error("Failed to load medical dictionary.", err);
-        isAutocorrectEnabled = false; // Disable autocorrect logic if it fails to load
+        isAutocorrectEnabled = false; 
       } finally {
-        // Unlock the button and set its visual state based on whether data loaded
         dictToggleBtn.disabled = false;
         
         if (medicalVocabulary.length > 0) {
@@ -405,7 +375,7 @@
           dictToggleBtn.innerHTML = '<i data-lucide="zap-off" style="width: 16px; height: 16px;"></i> <span>Dict: Error</span>';
         }
         
-        lucide.createIcons(); // Force refresh the SVG icons
+        lucide.createIcons(); 
       }
     }
     
@@ -418,8 +388,6 @@
       let words = rawTranscript.split(" ");
       let correctedWords = words.map(word => {
         let cleanWord = word.replace(/[^\w\s]|_/g, "");
-        
-        // Changed from 4 to 3 to capture acronyms like AVM, DBS, AAV
         if (cleanWord.length < 3) return word; 
 
         const results = fuse.search(cleanWord);
@@ -448,9 +416,9 @@
       try {
         const response = await fetch(GAS_BACKEND_URL, {
           method: "POST",
-          redirect: "follow", // CRITICAL: Tells the browser to follow Google's 302 redirect
+          redirect: "follow",
           headers: {
-            "Content-Type": "text/plain;charset=utf-8", // CRITICAL: Bypasses the CORS preflight check
+            "Content-Type": "text/plain;charset=utf-8", 
           },
           body: JSON.stringify({ action: "getTemplates", code: code })
         });
@@ -521,7 +489,6 @@
       
       const cursorPos = textArea.selectionStart;
       const textBeforeCursor = finalText.slice(0, cursorPos);
-      
       const match = textBeforeCursor.match(/([a-zA-Z]+)$/);
 
       if (match && medicalVocabulary.length > 0) {
@@ -614,9 +581,9 @@
         try {
           const response = await fetch(GAS_BACKEND_URL, {
             method: "POST",
-            redirect: "follow", // CRITICAL: Tells the browser to follow Google's 302 redirect
+            redirect: "follow", 
             headers: {
-              "Content-Type": "text/plain;charset=utf-8", // CRITICAL: Bypasses the CORS preflight check
+              "Content-Type": "text/plain;charset=utf-8", 
             },
             body: JSON.stringify({ action: "vision", image: base64Image })
           });
@@ -729,9 +696,9 @@
       try {
         const response = await fetch(GAS_BACKEND_URL, {
           method: "POST",
-          redirect: "follow", // CRITICAL: Tells the browser to follow Google's 302 redirect
+          redirect: "follow",
           headers: {
-            "Content-Type": "text/plain;charset=utf-8", // CRITICAL: Bypasses the CORS preflight check
+            "Content-Type": "text/plain;charset=utf-8", 
           },
          body: JSON.stringify({action: "speech", audio: base64Audio, language: langSelect.value})
         });
@@ -767,41 +734,58 @@
       const response = await fetch(url); const data = await response.json(); return data[0].map(item => item[0]).join('');
     }
 
-    document.getElementById('translate-btn').addEventListener('click', async () => {
+    translateBtn.addEventListener('click', async () => {
       const textToTranslate = textArea.value.trim();
       if (!textToTranslate) { showError("Please enter some original text first."); return; }
-      showError(''); document.getElementById('translate-btn').disabled = true;
-      document.getElementById('translate-btn').innerHTML = '<i data-lucide="loader" class="animate-spin"></i> Translating...'; lucide.createIcons();
+      showError(''); translateBtn.disabled = true;
+      translateBtn.innerHTML = '<i data-lucide="loader" class="animate-spin"></i> Translating...'; lucide.createIcons();
 
       try {
         const translatedText = await translateToEnglish(textToTranslate);
         translatedArea.value = translatedText;
       } catch (err) { showError("Translation failed."); } 
-      finally { document.getElementById('translate-btn').disabled = false; document.getElementById('translate-btn').innerHTML = '<i data-lucide="languages"></i> To English'; lucide.createIcons(); }
+      finally { translateBtn.disabled = false; translateBtn.innerHTML = '<i data-lucide="languages"></i> To English'; lucide.createIcons(); }
     });
 
+    // --- UPDATED QR GENERATION LOGIC ---
     document.getElementById('generate-btn').addEventListener('click', async () => {
-      let textToProcess = translatedArea.value.trim();
+      const isNotesMode = modeSelect.value === 'notes';
+      const originalText = textArea.value.trim();
+      let textToProcess = '';
       
-      if (!textToProcess) { 
-        const originalText = textArea.value.trim();
-        if (!originalText) {
-          showError("Please enter text first."); return; 
+      if (isNotesMode) {
+        // Notes Mode: Only use the original text box
+        textToProcess = originalText;
+        if (!textToProcess) {
+          showError("Please enter text first."); 
+          return;
         }
-        showError(''); document.getElementById('generate-btn').disabled = true;
-        document.getElementById('generate-btn').innerHTML = '<i data-lucide="loader" class="animate-spin"></i> Generating...'; lucide.createIcons();
+      } else {
+        // Translation Mode: Try to use translation box, auto-translate if empty
+        textToProcess = translatedArea.value.trim();
+        
+        if (!textToProcess) { 
+          if (!originalText) {
+            showError("Please enter text first."); 
+            return; 
+          }
+          
+          showError(''); document.getElementById('generate-btn').disabled = true;
+          document.getElementById('generate-btn').innerHTML = '<i data-lucide="loader" class="animate-spin"></i> Generating...'; lucide.createIcons();
 
-        try {
-           textToProcess = await translateToEnglish(originalText);
-           translatedArea.value = textToProcess;
-        } catch (err) {
-           showError("Failed to auto-translate for QR.");
-           document.getElementById('generate-btn').disabled = false;
-           document.getElementById('generate-btn').innerHTML = '<i data-lucide="qr-code"></i> Create QR'; lucide.createIcons();
-           return;
+          try {
+             textToProcess = await translateToEnglish(originalText);
+             translatedArea.value = textToProcess;
+          } catch (err) {
+             showError("Failed to auto-translate for QR.");
+             document.getElementById('generate-btn').disabled = false;
+             document.getElementById('generate-btn').innerHTML = '<i data-lucide="qr-code"></i> Create QR'; lucide.createIcons();
+             return;
+          }
         }
       }
 
+      // Generate the QR code using whichever text was selected
       showError(''); document.getElementById('generate-btn').disabled = true;
       document.getElementById('generate-btn').innerHTML = '<i data-lucide="loader" class="animate-spin"></i> Generating...'; lucide.createIcons();
 
@@ -842,7 +826,10 @@
       const footnoteFontSize = 45; 
       const footnoteLineHeight = 65;
       
-      const textToDraw = translatedArea.value.trim();
+      // Determine which text to print onto the canvas depending on the Mode selected
+      const isNotesMode = modeSelect.value === 'notes';
+      const textToDraw = isNotesMode ? textArea.value.trim() : translatedArea.value.trim();
+
       canvas.width = qrSize + (padding * 2); 
       
       ctx.font = fontSize + 'px sans-serif'; 
@@ -933,18 +920,24 @@
 
     document.getElementById('share-btn').addEventListener('click', async () => {
       if (!currentQrUrl || !document.getElementById('qr-image').complete) { showError("Generate a QR code first."); return; }
+      
+      // Determine which text to share via WhatsApp based on Mode
+      const isNotesMode = modeSelect.value === 'notes';
+      const textToShare = isNotesMode ? textArea.value.trim() : translatedArea.value.trim();
+
       try {
         getCombinedCanvas().toBlob(async (blob) => {
           const file = new File([blob], 'voice-qr-combined.jpg', { type: 'image/jpeg' });
           if (navigator.canShare && navigator.canShare({ files: [file] })) {
-            try { await navigator.share({ files: [file], title: 'Translated Voice QR' }); } catch (err) {}
+            try { await navigator.share({ files: [file], title: 'Voice & Scan QR' }); } catch (err) {}
           } else {
             alert("Your browser doesn't support direct image sharing. The image will download, and WhatsApp will open!");
             const link = document.createElement('a'); 
             link.href = URL.createObjectURL(blob); 
             link.download = 'voice-qr-combined.jpg'; 
             link.click();
-            window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(translatedArea.value.trim()), '_blank');
+            
+            window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(textToShare), '_blank');
           }
         }, 'image/jpeg', 0.95);
       } catch (err) { showError("Failed to prepare image for sharing."); }
@@ -967,7 +960,7 @@
         document.getElementById('autocomplete-bar').classList.add('hidden-invisible'); 
       }
       
-      lucide.createIcons(); // Force refresh the SVG icons
+      lucide.createIcons(); 
     });
   </script>
 </body>

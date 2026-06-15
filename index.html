@@ -45,9 +45,11 @@
     .input-wrapper { position: relative; display: flex; flex-direction: column; width: 100%; transition: all 0.3s ease;}
     .input-label { font-size: 0.875rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; }
     
-    textarea { width: 100%; min-height: 150px; padding: 1rem; border-radius: 1rem; border: 1px solid var(--border-color); font-size: 1rem; line-height: 1.5; resize: vertical; font-family: inherit; transition: all 0.2s; }
+    /* --- TEXTAREA SIZING LOGIC --- */
+    textarea { width: 100%; min-height: 150px; padding: 1rem; border-radius: 1rem; border: 1px solid var(--border-color); font-size: 1rem; line-height: 1.5; resize: vertical; font-family: inherit; transition: min-height 0.3s ease, border-color 0.2s, box-shadow 0.2s; }
     textarea:focus { outline: none; border-color: #a855f7; box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2); }
     #translated-input { background-color: #f8fafc; }
+    .textarea-expanded { min-height: 344px; } /* Accounts for the hidden box + label + gap */
     
     .recording-indicator { position: absolute; top: 2.25rem; right: 1rem; background: #fee2e2; color: #dc2626; padding: 0.375rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; display: flex; align-items: center; gap: 0.5rem; }
     .recording-indicator .dot { width: 8px; height: 8px; background-color: #dc2626; border-radius: 50%; animation: pulse 2s infinite; }
@@ -163,13 +165,13 @@
         <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 200px;">
           <span style="font-size: 0.875rem; font-weight: 600; color: var(--text-muted); white-space: nowrap;">Mode:</span>
           <select id="mode-select" class="lang-select">
-            <option value="translation">Translation Mode</option>
-            <option value="notes">Note Taking Mode</option>
+            <option value="notes" selected>Note Taking</option>
+            <option value="translation">Translation</option>
           </select>
         </div>
 
         <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 200px;">
-          <span style="font-size: 0.875rem; font-weight: 600; color: var(--text-muted); white-space: nowrap;">Language:</span>
+          <span style="font-size: 0.875rem; font-weight: 600; color: var(--text-muted); white-space: nowrap;">Lang:</span>
           <select id="lang-select" class="lang-select">
             <option value="en-US">English (US)</option>
             <option value="zh-CN">Chinese (Simplified 简体)</option>
@@ -308,21 +310,21 @@
     modeSelect.addEventListener('change', (e) => {
       if (e.target.value === 'notes') {
         translatedWrapper.classList.add('hidden');
-        translateBtn.classList.add('hidden');
-        // Let the generate button take over the top spot in the grid
-        actionControls.style.gridTemplateAreas = `
-          "generate daily medical"
-          "generate camera clear"
-        `;
+        textArea.classList.add('textarea-expanded');
       } else {
         translatedWrapper.classList.remove('hidden');
-        translateBtn.classList.remove('hidden');
-        // Revert to original grid layout
-        actionControls.style.gridTemplateAreas = `
-          "translate daily medical"
-          "generate camera clear"
-        `;
+        textArea.classList.remove('textarea-expanded');
       }
+    });
+
+    // --- INITIALIZE UI STATE ON LOAD ---
+    window.addEventListener('load', () => {
+      if (modeSelect.value === 'notes') {
+        translatedWrapper.classList.add('hidden');
+        textArea.classList.add('textarea-expanded');
+      }
+      loadDictionary();
+      enforceLanguageRules();
     });
 
     // --- DICTIONARY & AUTOCORRECT LOGIC ---
@@ -379,8 +381,6 @@
       }
     }
     
-    window.addEventListener('load', loadDictionary);
-
     function applyMedicalAutocorrect(rawTranscript) {
       if (!isAutocorrectEnabled) return rawTranscript;
       if (!fuse || medicalVocabulary.length === 0) return rawTranscript;
@@ -546,7 +546,6 @@
       }
     }
     langSelect.addEventListener('change', enforceLanguageRules);
-    window.addEventListener('load', enforceLanguageRules);
 
     function lockControls(exclude) {
       if(exclude !== 'daily') dailyMicBtn.disabled = true;
@@ -734,20 +733,41 @@
       const response = await fetch(url); const data = await response.json(); return data[0].map(item => item[0]).join('');
     }
 
+    // --- UPDATED TRANSLATE BUTTON LOGIC ---
     translateBtn.addEventListener('click', async () => {
       const textToTranslate = textArea.value.trim();
       if (!textToTranslate) { showError("Please enter some original text first."); return; }
-      showError(''); translateBtn.disabled = true;
-      translateBtn.innerHTML = '<i data-lucide="loader" class="animate-spin"></i> Translating...'; lucide.createIcons();
+      
+      showError(''); 
+      translateBtn.disabled = true;
+      translateBtn.innerHTML = '<i data-lucide="loader" class="animate-spin"></i> Translating...'; 
+      lucide.createIcons();
 
       try {
+        // 1. Run the translation
         const translatedText = await translateToEnglish(textToTranslate);
         translatedArea.value = translatedText;
-      } catch (err) { showError("Translation failed."); } 
-      finally { translateBtn.disabled = false; translateBtn.innerHTML = '<i data-lucide="languages"></i> To English'; lucide.createIcons(); }
+        
+        // 2. Switch to translation mode if currently in Notes Mode
+        if (modeSelect.value === 'notes') {
+          modeSelect.value = 'translation';
+          translatedWrapper.classList.remove('hidden');
+          textArea.classList.remove('textarea-expanded'); // Shrink back down
+        }
+
+        // 3. Automatically trigger QR code generation
+        document.getElementById('generate-btn').click();
+
+      } catch (err) { 
+        showError("Translation failed."); 
+      } finally { 
+        translateBtn.disabled = false; 
+        translateBtn.innerHTML = '<i data-lucide="languages"></i> To English'; 
+        lucide.createIcons(); 
+      }
     });
 
-    // --- UPDATED QR GENERATION LOGIC ---
+    // --- QR GENERATION LOGIC ---
     document.getElementById('generate-btn').addEventListener('click', async () => {
       const isNotesMode = modeSelect.value === 'notes';
       const originalText = textArea.value.trim();

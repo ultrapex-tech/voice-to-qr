@@ -236,7 +236,7 @@
         <div class="input-wrapper hidden" id="conversation-wrapper">
           <label class="input-label">Live Conversation</label>
           <div class="speaker-controls">
-            <!-- NEW SEGMENTED SLIDER -->
+            <!-- SEGMENTED SLIDER -->
             <div id="speaker-slider" class="speaker-slider right-active">
               <div class="slider-thumb" id="slider-thumb"></div>
               <div class="slider-option opt-left"><i data-lucide="mic"></i> Spk (Left)</div>
@@ -323,8 +323,19 @@
     let currentSpeaker = 1; // 1 = Right, 2 = Left
     let activeBubble = document.getElementById('active-bubble');
     let currentTurnFinalText = ""; 
+    let isSwitchingSpeaker = false; // Tracks if we are flushing the mic buffer
     const chatContainer = document.getElementById('chat-container');
     const speakerSlider = document.getElementById('speaker-slider');
+
+    // Utility to generate a fresh chat bubble
+    function createNewBubble() {
+      currentTurnFinalText = ""; 
+      activeBubble = document.createElement('div');
+      activeBubble.className = `chat-bubble speaker-${currentSpeaker}`;
+      activeBubble.textContent = "...";
+      chatContainer.appendChild(activeBubble);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
 
     // --- MODE TOGGLE LOGIC ---
     modeSelect.addEventListener('change', (e) => {
@@ -375,19 +386,19 @@
     // --- CONVERSATION SPEAKER TOGGLE (SLIDER) ---
     speakerSlider.addEventListener('click', () => {
       currentSpeaker = currentSpeaker === 1 ? 2 : 1;
-      currentTurnFinalText = ""; 
       
-      if (currentSpeaker === 1) {
-        speakerSlider.classList.add('right-active');
+      // Update visual slider immediately
+      if (currentSpeaker === 1) speakerSlider.classList.add('right-active');
+      else speakerSlider.classList.remove('right-active');
+      
+      // If mic is live, we MUST stop it to flush the old text into the old bubble
+      if (isDailyRecording && recognition) {
+        isSwitchingSpeaker = true;
+        recognition.stop(); 
+        // We will create the new bubble inside recognition.onend() once the old text is safely stored
       } else {
-        speakerSlider.classList.remove('right-active');
+        createNewBubble(); // If mic isn't running, just create the bubble instantly
       }
-      
-      activeBubble = document.createElement('div');
-      activeBubble.className = `chat-bubble speaker-${currentSpeaker}`;
-      activeBubble.textContent = "...";
-      chatContainer.appendChild(activeBubble);
-      chatContainer.scrollTop = chatContainer.scrollHeight;
     });
 
     // --- DICTIONARY & AUTOCORRECT LOGIC ---
@@ -581,6 +592,7 @@
     let recognition = null;
     if (SpeechRecognition) {
       recognition = new SpeechRecognition(); recognition.continuous = true; recognition.interimResults = true;
+      
       recognition.onstart = () => {
         isDailyRecording = true; lockControls('daily');
         dailyMicBtn.classList.add('is-recording'); iconDailyMic.classList.add('hidden'); iconDailyStop.classList.remove('hidden');
@@ -611,7 +623,22 @@
       };
       
       recognition.onerror = (e) => { showError("Mic error: " + e.error); stopDailyMic(); };
-      recognition.onend = () => stopDailyMic();
+      
+      // If the mic stops natively or if we stopped it manually via the slider
+      recognition.onend = () => {
+        if (isSwitchingSpeaker) {
+          isSwitchingSpeaker = false; // Reset the flag
+          createNewBubble(); // Now that the old text is locked in, create the new bubble
+          
+          // Tiny delay ensures Android Chrome doesn't crash when immediately restarting the audio stream
+          setTimeout(() => {
+            try { recognition.start(); } catch(e) {}
+          }, 50);
+        } else {
+          stopDailyMic();
+        }
+      };
+      
     } else { dailyMicBtn.style.display = 'none'; }
 
     function stopDailyMic() {
@@ -675,13 +702,8 @@
               chatContainer.appendChild(bubble);
             });
             
-            currentTurnFinalText = ""; 
-            activeBubble = document.createElement('div');
-            activeBubble.className = `chat-bubble speaker-${currentSpeaker}`;
-            activeBubble.textContent = "...";
-            chatContainer.appendChild(activeBubble);
-            
-            chatContainer.scrollTop = chatContainer.scrollHeight;
+            // Generate a fresh empty bubble just in case they decide to use the daily mic next
+            createNewBubble();
           } else {
             let correctedText = applyMedicalAutocorrect(data.text);
             finalText = finalText + (finalText ? ' ' : '') + correctedText; textArea.value = finalText;
@@ -746,15 +768,19 @@
       finally { document.getElementById('generate-btn').disabled = false; document.getElementById('generate-btn').innerHTML = '<i data-lucide="qr-code"></i> Create QR'; lucide.createIcons(); }
     });
 
+    // --- CLEAR ALL BUTTON ---
     document.getElementById('clear-btn').addEventListener('click', () => {
       finalText = ''; textArea.value = ''; translatedArea.value = ''; currentQrUrl = ''; document.getElementById('qr-image').src = '';
       document.getElementById('qr-placeholder').classList.remove('hidden'); document.getElementById('qr-result').classList.add('hidden'); showError('');
       
-      chatContainer.innerHTML = '<div class="chat-bubble speaker-1" id="active-bubble">...</div>';
-      activeBubble = document.getElementById('active-bubble'); currentSpeaker = 1; currentTurnFinalText = "";
+      chatContainer.innerHTML = '';
+      currentSpeaker = 1; 
       speakerSlider.classList.add('right-active');
+      createNewBubble();
       
-      if (isDailyRecording) recognition.stop(); if (isGoogleRecording) stopGoogleMic();
+      isSwitchingSpeaker = false; 
+      if (isDailyRecording) recognition.stop(); 
+      if (isGoogleRecording) stopGoogleMic();
     });
 
     // --- CANVAS & SHARE LOGIC ---

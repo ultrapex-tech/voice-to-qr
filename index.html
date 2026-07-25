@@ -107,7 +107,7 @@
     .suggestion-chip:first-child { border-top-left-radius: 999px; border-bottom-left-radius: 999px; margin-left: 0; }
     .suggestion-chip:last-child { border-top-right-radius: 999px; border-bottom-right-radius: 999px; }
     
-    .btn-dict-toggle { padding: 0.5rem 1rem; border-radius: 0.75rem; font-weight: 600; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; transition: all 0.2s; height: 44px; /* <--- ADD THIS */}
+    .btn-dict-toggle {padding: 0 1rem; /* Changed padding */ border-radius: 0.75rem; font-weight: 600; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; transition: all 0.2s; height: 44px; /* <--- ADD THIS */}
     .dict-on { background-color: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
     .dict-off { background-color: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db; }
 
@@ -149,7 +149,7 @@
     /* Right is active -> text is white */
     .speaker-slider.right-active .opt-right { color: white; }
     .font-slider-container { 
-      display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 1rem; 
+      display: flex; align-items: center; gap: 0.75rem; padding: 0 1rem;
       border-radius: 0.75rem; border: 1px solid var(--border-color); 
       background-color: white; flex: 1; min-width: 150px; 
       height: 44px; /* <--- ADD THIS */

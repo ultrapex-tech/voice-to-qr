@@ -307,7 +307,7 @@ textarea {
           </div>
         </div>
         
-        <div class="input-wrapper">
+        <div class="input-wrapper" id="notes-wrapper">
           <label class="input-label">Original Text</label>
           <textarea id="text-input" placeholder="Tap a mic, scan a document, or type your text here..."></textarea>
           <div id="recording-indicator" class="recording-indicator hidden"><div class="dot"></div><span id="recording-text">RECORDING</span></div>
@@ -779,16 +779,44 @@ textarea {
           method: "POST",
           redirect: "follow",
           headers: {
-            "Content-Type": "text/plain;charset=utf-8", 
+            "Content-Type": "text/plain" 
           },
-         body: JSON.stringify({action: "speech", audio: base64Audio, language: langSelect.value})
+         // NEW: We are now passing modeSelect.value to the backend
+         body: JSON.stringify({
+           action: "speech", 
+           audio: base64Audio, 
+           language: langSelect.value,
+           mode: modeSelect.value 
+         })
         });
         
         const data = await response.json();
+        
         if (data.success) {
-          let correctedText = applyMedicalAutocorrect(data.text);
-          finalText = finalText + (finalText ? ' ' : '') + correctedText; 
-          textArea.value = finalText;
+          // NEW: Handle Conversation Mode Output
+          if (modeSelect.value === 'conversation' && data.conversation) {
+            // Remove the temporary "..." bubble if it exists
+            if (activeBubble && activeBubble.textContent === "...") {
+              activeBubble.remove();
+            }
+            
+            // Loop through the JSON array Gemini returned and build bubbles
+            data.conversation.forEach(turn => {
+              const bubble = document.createElement('div');
+              // Ensure speaker is 1 or 2 so CSS matches
+              const speakerNum = turn.speaker === 1 ? 1 : 2; 
+              bubble.className = `chat-bubble speaker-${speakerNum}`;
+              bubble.textContent = applyMedicalAutocorrect(turn.text);
+              chatContainer.appendChild(bubble);
+            });
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+          } else {
+            // Standard Notes Mode Output
+            let correctedText = applyMedicalAutocorrect(data.text);
+            finalText = finalText + (finalText ? ' ' : '') + correctedText; 
+            textArea.value = finalText;
+          }
         } else { 
           showError("Backend error: " + data.error); 
         }
@@ -804,7 +832,7 @@ textarea {
         iconGoogleMic = document.getElementById('icon-google-mic');
         iconGoogleStop = document.getElementById('icon-google-stop');
       }
-    } 
+    }
 
     googleMicBtn.addEventListener('click', () => {
       if (isGoogleRecording) stopGoogleMic(); else startGoogleMic();

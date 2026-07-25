@@ -17,7 +17,7 @@
       --dark: #111827; --dark-hover: #1f2937;
       --bg-gradient-start: #eef2ff; --bg-gradient-mid: #faf5ff; --bg-gradient-end: #fdf2f8;
       --text-main: #374151; --text-muted: #6b7280; --border-color: #e5e7eb;
-      --text-scale: 1rem;
+      --text-scale: 1rem; /* Dynamic font size for conversation */
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: system-ui, sans-serif; min-height: 100vh; background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-mid), var(--bg-gradient-end)); display: flex; align-items: center; justify-content: center; padding: 1rem; color: var(--text-main); }
@@ -36,9 +36,9 @@
     .lang-select:focus { border-color: var(--primary); }
     
     .error-box { background-color: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; padding: 1rem; border-radius: 1rem; display: flex; gap: 0.75rem; align-items: flex-start; margin-bottom: 1.5rem; font-size: 0.875rem; font-weight: 500; }
-    .medical-banner, .camera-banner { padding: 1rem; border-radius: 1rem; display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1.5rem; font-size: 0.875rem; font-weight: 600; animation: fadeIn 0.3s ease-in-out; }
-    .medical-banner { background-color: #faf5ff; border: 1px solid #e9d5ff; color: #7e22ce; }
-    .camera-banner { background-color: #fff7ed; border: 1px solid #ffedd5; color: #c2410c; }
+    
+    .medical-banner { background-color: #faf5ff; border: 1px solid #e9d5ff; color: #7e22ce; padding: 1rem; border-radius: 1rem; display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1.5rem; font-size: 0.875rem; font-weight: 600; animation: fadeIn 0.3s ease-in-out; }
+    .camera-banner { background-color: #fff7ed; border: 1px solid #ffedd5; color: #c2410c; padding: 1rem; border-radius: 1rem; display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1.5rem; font-size: 0.875rem; font-weight: 600; animation: fadeIn 0.3s ease-in-out; }
     
     .hidden { display: none !important; }
     
@@ -46,6 +46,7 @@
     .input-wrapper { position: relative; display: flex; flex-direction: column; width: 100%; transition: all 0.3s ease;}
     .input-label { font-size: 0.875rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; }
     
+    /* --- TEXTAREA SIZING LOGIC --- */
     textarea { width: 100%; min-height: 150px; padding: 1rem; border-radius: 1rem; border: 1px solid var(--border-color); font-size: var(--text-scale) !important; line-height: 1.5; resize: vertical; font-family: inherit; transition: min-height 0.3s ease, border-color 0.2s, box-shadow 0.2s; }
     textarea:focus { outline: none; border-color: #a855f7; box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2); }
     #translated-input { background-color: #f8fafc; }
@@ -58,21 +59,34 @@
     .access-input { flex: 1; padding: 0.5rem 1rem; border-radius: 0.75rem; border: 1px solid var(--border-color); outline: none; font-size: 0.875rem; }
     .access-input:focus { border-color: var(--primary); }
     .btn-unlock { background-color: var(--primary); color: white; padding: 0.5rem 1.25rem; border-radius: 0.75rem; font-weight: 600; border: none; cursor: pointer; transition: background-color 0.2s; display: flex; align-items: center; gap: 0.5rem; }
+    .btn-unlock:hover { background-color: var(--primary-hover); }
+    .btn-unlock:disabled { opacity: 0.7; cursor: not-allowed; }
     
     button { border: none; background: none; cursor: pointer; font-family: inherit; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
     button:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(70%); }
     
+    /* --- BULLETPROOF GRID LAYOUT --- */
     .controls { display: grid; grid-template-columns: 1fr auto auto; grid-template-areas: "translate daily medical" "generate camera clear"; gap: 0.75rem; width: 100%; transition: all 0.3s ease; }
     .btn-translate { grid-area: translate; height: 60px; background-color: var(--secondary); color: white; border-radius: 1rem; font-size: 1rem; font-weight: 700; gap: 0.5rem; }
     .btn-translate:hover:not(:disabled) { background-color: var(--secondary-hover); }
+    
     .btn-mic-daily { grid-area: daily; position: relative; width: 60px; height: 60px; border-radius: 50%; background-color: var(--primary); color: white; }
+    .btn-mic-daily:hover:not(:disabled) { background-color: var(--primary-hover); transform: scale(1.05); }
+    
     .btn-mic-medical { grid-area: medical; position: relative; width: 60px; height: 60px; border-radius: 50%; background-color: var(--medical); color: white; }
+    .btn-mic-medical:hover:not(:disabled) { background-color: var(--medical-hover); transform: scale(1.05); }
+
     .btn-generate { grid-area: generate; height: 60px; background-color: var(--dark); color: white; border-radius: 1rem; font-size: 1rem; font-weight: 700; gap: 0.5rem; }
+    .btn-generate:hover:not(:disabled) { background-color: var(--dark-hover); }
+
     .btn-camera { grid-area: camera; position: relative; width: 60px; height: 60px; border-radius: 50%; background-color: var(--camera); color: white; }
+    .btn-camera:hover:not(:disabled) { background-color: var(--camera-hover); transform: scale(1.05); }
+
     .btn-clear { grid-area: clear; width: 60px; height: 60px; background-color: white; border: 1px solid var(--border-color); color: var(--text-muted); border-radius: 1rem; }
     .btn-clear:hover:not(:disabled) { background-color: #fef2f2; color: var(--danger); border-color: #fca5a5; }
 
     .is-recording { background-color: var(--danger) !important; box-shadow: 0 10px 15px -3px rgba(239, 68, 68, 0.3); }
+    .is-recording:hover { background-color: var(--danger-hover) !important; transform: scale(1.05); }
     .mic-ping { position: absolute; inset: 0; border-radius: 50%; border: 4px solid var(--danger); opacity: 0; pointer-events: none; }
     .is-recording .mic-ping { animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite; }
     
@@ -80,8 +94,10 @@
     .qr-box { background: white; padding: 1.5rem; border-radius: 1.5rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); border: 1px solid #f3f4f6; margin-bottom: 1.5rem; }
     .qr-image { width: 256px; height: 256px; object-fit: contain; }
     .action-buttons { display: flex; gap: 0.75rem; width: 100%; max-width: 320px; margin-bottom: 1rem; }
-    .btn-download { background-color: #e0e7ff; color: #4338ca; border-color: #c7d2fe; flex: 1; padding: 0.75rem; border-radius: 1rem; font-weight: 700; font-size: 0.875rem; gap: 0.5rem; border: 1px solid; }
-    .btn-share { background-color: #dcfce7; color: #15803d; border-color: #bbf7d0; flex: 1; padding: 0.75rem; border-radius: 1rem; font-weight: 700; font-size: 0.875rem; gap: 0.5rem; border: 1px solid; }
+    .btn-download, .btn-share { flex: 1; padding: 0.75rem; border-radius: 1rem; font-weight: 700; font-size: 0.875rem; gap: 0.5rem; border: 1px solid; }
+    .btn-download { background-color: #e0e7ff; color: #4338ca; border-color: #c7d2fe; } .btn-download:hover { background-color: #c7d2fe; }
+    .btn-share { background-color: #dcfce7; color: #15803d; border-color: #bbf7d0; } .btn-share:hover { background-color: #bbf7d0; }
+    .qr-caption { color: var(--text-muted); font-size: 0.875rem; text-align: center; max-width: 250px; line-height: 1.4; }
     .qr-placeholder { display: flex; flex-direction: column; align-items: center; opacity: 0.4; }
     .qr-placeholder i { width: 128px; height: 128px; margin-bottom: 1.5rem; }
     
@@ -91,18 +107,21 @@
     .animate-spin { animation: spin 1s linear infinite; }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
+    /* --- AUTOCOMPLETE SUGGESTIONS BAR --- */
     .suggestions-bar { display: flex; gap: 0; overflow-x: auto; scrollbar-width: none; transition: opacity 0.2s ease-in-out; position: absolute; bottom: 0.5rem; left: 0.5rem; right: 0.5rem; z-index: 10; padding: 0.25rem; }
     .suggestions-bar::-webkit-scrollbar { display: none; }
     .hidden-invisible { opacity: 0; pointer-events: none; }
     .suggestion-chip { background-color: rgba(243, 232, 255, 0.95); color: #7e22ce; border: 1px solid #d8b4fe; padding: 0.35rem 0.75rem; font-size: 0.75rem; font-weight: 600; white-space: nowrap; cursor: pointer; backdrop-filter: blur(2px); transition: all 0.15s ease; border-radius: 0; margin-left: -1px; position: relative; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     .suggestion-chip:first-child { border-top-left-radius: 999px; border-bottom-left-radius: 999px; margin-left: 0; }
     .suggestion-chip:last-child { border-top-right-radius: 999px; border-bottom-right-radius: 999px; }
-    
+    .suggestion-chip:hover { background-color: #e9d5ff; z-index: 1; }
+    .suggestion-chip:active { background-color: #d8b4fe; color: #581c87; z-index: 2; box-shadow: inset 0 2px 4px rgba(0,0,0,0.15); }
+
     .btn-dict-toggle { padding: 0.5rem 1rem; border-radius: 0.75rem; font-weight: 600; font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; transition: all 0.2s; }
     .dict-on { background-color: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
     .dict-off { background-color: #f3f4f6; color: #6b7280; border: 1px solid #d1d5db; }
 
-    /* Conversation UI */
+    /* --- DYNAMIC FONT & CONVERSATION UI --- */
     .chat-wrapper { display: flex; flex-direction: column; gap: 1rem; width: 100%; min-height: 300px; max-height: 500px; overflow-y: auto; padding: 1rem; background: #f8fafc; border-radius: 1rem; border: 1px solid var(--border-color); transition: all 0.3s ease; }
     .chat-bubble { max-width: 75%; padding: 0.75rem 1.25rem; border-radius: 1.25rem; font-size: var(--text-scale); line-height: 1.5; position: relative; animation: fadeIn 0.3s ease-out; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
     .speaker-1 { align-self: flex-end; background: var(--primary); color: white; border-bottom-right-radius: 0.25rem; }
@@ -195,6 +214,7 @@
       </div>
 
       <div class="input-group">
+        
         <!-- Conversation UI -->
         <div class="input-wrapper hidden" id="conversation-wrapper">
           <label class="input-label">Live Conversation
@@ -288,8 +308,7 @@
     const speakerToggleBtn = document.getElementById('speaker-toggle-btn');
     const speakerControls = document.querySelector('.speaker-controls');
     
-    // Set initial alignment
-    speakerControls.style.justifyContent = "flex-end";
+    speakerControls.style.justifyContent = "flex-end"; // Set initial alignment
 
     // --- MODE TOGGLE LOGIC ---
     modeSelect.addEventListener('change', (e) => {
@@ -572,7 +591,6 @@
         
         if (modeSelect.value === 'conversation') {
           if (activeBubble.textContent === "...") activeBubble.textContent = "";
-          // LOCK IN final text to prevent stuttering
           if (finalChunk) { currentTurnFinalText += finalChunk; }
           activeBubble.textContent = currentTurnFinalText + interimChunk;
           chatContainer.scrollTop = chatContainer.scrollHeight;
@@ -637,6 +655,7 @@
         if (data.success) {
           if (modeSelect.value === 'conversation' && data.conversation) {
             if (activeBubble && activeBubble.textContent === "...") activeBubble.remove();
+            
             data.conversation.forEach(turn => {
               const bubble = document.createElement('div');
               const speakerNum = turn.speaker === 1 ? 1 : 2; 
@@ -644,6 +663,14 @@
               bubble.textContent = applyMedicalAutocorrect(turn.text);
               chatContainer.appendChild(bubble);
             });
+            
+            // FIX: Ensure Daily Mic knows where to resume recording
+            currentTurnFinalText = ""; 
+            activeBubble = document.createElement('div');
+            activeBubble.className = `chat-bubble speaker-${currentSpeaker}`;
+            activeBubble.textContent = "...";
+            chatContainer.appendChild(activeBubble);
+            
             chatContainer.scrollTop = chatContainer.scrollHeight;
           } else {
             let correctedText = applyMedicalAutocorrect(data.text);

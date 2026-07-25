@@ -505,7 +505,7 @@
         let cleanWord = word.replace(/[^\w\s]|_/g, "");
         if (cleanWord.length < 3) return word; 
         const results = fuse.search(cleanWord);
-        if (results.length > 0 && results[0].score < 0.35) return word.replace(cleanWord, results[0].item); 
+        if (results.length > 0 && results[0].score < 0.15) return word.replace(cleanWord, results[0].item); 
         return word;
       });
       return correctedWords.join(" ");

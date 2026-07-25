@@ -148,6 +148,21 @@
     .speaker-slider:not(.right-active) .opt-left { color: var(--text-main); }
     /* Right is active -> text is white */
     .speaker-slider.right-active .opt-right { color: white; }
+    .font-slider-container { 
+      display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 1rem; 
+      border-radius: 0.75rem; border: 1px solid var(--border-color); 
+      background-color: white; flex: 1; min-width: 150px; 
+    }
+    .font-slider { 
+      flex: 1; cursor: pointer; accent-color: var(--primary); 
+      height: 6px; border-radius: 3px; background: #e2e8f0; 
+      -webkit-appearance: none; appearance: none; outline: none;
+    }
+    .font-slider::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: var(--primary); cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -179,9 +194,16 @@
           </select>
         </div>
         
-        <button id="font-toggle-btn" class="btn-dict-toggle dict-off" title="Adjust Font Size">
+        <!--><button id="font-toggle-btn" class="btn-dict-toggle dict-off" title="Adjust Font Size">
           <i data-lucide="a-large-small"></i> <span>Size: M</span>
-        </button>
+        </button><--->
+
+        <!-- Font Size Slider -->
+        <div class="font-slider-container" title="Adjust Font Size">
+          <span style="font-size: 0.75rem; font-weight: 800; color: var(--text-muted);">A</span>
+          <input type="range" id="font-slider" min="1" max="5" step="1" value="1" class="font-slider">
+          <span style="font-size: 1.25rem; font-weight: 800; color: var(--text-main);">A</span>
+        </div>
 
         <button id="dict-toggle-btn" class="btn-dict-toggle dict-off" title="Toggle Medical Dictionary" disabled>
           <i data-lucide="loader" class="animate-spin" style="width: 16px; height: 16px;"></i> <span>Loading...</span>
@@ -368,7 +390,7 @@
     });
 
     // --- FONT RESIZER LOGIC ---
-    const fontToggleBtn = document.getElementById('font-toggle-btn');
+    /*const fontToggleBtn = document.getElementById('font-toggle-btn');
     const fontSizes = [
       { label: 'Size: M', scale: '1rem' },
       { label: 'Size: L', scale: '1.25rem' },
@@ -378,11 +400,29 @@
     ];
     let currentFontIndex = 0;
 
-    fontToggleBtn.addEventListener('click', () => {
+     fontToggleBtn.addEventListener('click', () => {
       currentFontIndex = (currentFontIndex + 1) % fontSizes.length;
       document.documentElement.style.setProperty('--text-scale', fontSizes[currentFontIndex].scale);
       fontToggleBtn.innerHTML = `<i data-lucide="a-large-small"></i> <span>${fontSizes[currentFontIndex].label}</span>`;
       lucide.createIcons();
+    });
+
+    */
+
+    // --- FONT RESIZER LOGIC (SLIDER) ---
+    const fontSlider = document.getElementById('font-slider');
+    
+    // Maps slider steps 1-5 to your M, L, XL, XXL, XXXL sizes
+    const fontScaleMap = {
+      '1': '1rem',    
+      '2': '1.25rem', 
+      '3': '1.5rem',  
+      '4': '2rem',    
+      '5': '2.5rem'   
+    };
+
+    fontSlider.addEventListener('input', (e) => {
+      document.documentElement.style.setProperty('--text-scale', fontScaleMap[e.target.value]);
     });
 
     // --- CONVERSATION SPEAKER TOGGLE (SLIDER) ---

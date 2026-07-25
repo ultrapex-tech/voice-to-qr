@@ -372,7 +372,9 @@
     const fontSizes = [
       { label: 'Size: M', scale: '1rem' },
       { label: 'Size: L', scale: '1.25rem' },
-      { label: 'Size: XL', scale: '1.5rem' }
+      { label: 'Size: XL', scale: '1.5rem' },
+      { label: 'Size: XXL', scale: '2rem' },
+      { label: 'Size: XXXL', scale: '2.5rem' }
     ];
     let currentFontIndex = 0;
 
@@ -562,8 +564,14 @@
       if(exclude !== 'daily') dailyMicBtn.disabled = true;
       if(exclude !== 'google') googleMicBtn.disabled = true;
       if(exclude !== 'camera') cameraBtn.disabled = true;
+      modeSelect.disabled = true;
+      langSelect.disabled = true;
     }
-    function unlockControls() { dailyMicBtn.disabled = false; cameraBtn.disabled = false; enforceLanguageRules(); }
+    function unlockControls() { 
+      dailyMicBtn.disabled = false; cameraBtn.disabled = false; 
+      modeSelect.disabled = false;
+      langSelect.disabled = false;
+      enforceLanguageRules(); }
 
     // --- CAMERA LOGIC ---
     cameraBtn.addEventListener('click', () => imageUpload.click());
